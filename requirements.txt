@@ -6,6 +6,7 @@ geoalchemy2>=0.15
 psycopg2-binary>=2.9
 
 # Geospatial / ETL
+requests>=2.31
 geopandas>=1.0
 rasterio>=1.4
 rasterstats>=0.20
