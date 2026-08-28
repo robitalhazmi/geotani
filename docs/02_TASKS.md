@@ -14,15 +14,15 @@ Organized in phases. Each phase should be a milestone/GitHub Project column. Rou
 - [x] Set up GitHub Actions: lint + basic CI on PR
 
 ## Phase 1 — Data Acquisition & Boundaries
-- [ ] Download Indonesia ADM4 (village) boundaries from HDX (`idn_adm_bps_adm4` dataset)
-- [ ] Filter boundaries to the 3 pilot provinces (full village detail) + rest of Indonesia (dissolve to kabupaten/kecamatan level for coarse view)
-- [ ] Load boundaries into PostGIS, validate geometries (`ST_MakeValid`, check for self-intersections)
-- [ ] Download SoilGrids v2.0 layers for Indonesia extent (pH, clay, sand, organic carbon) — bulk GeoTIFF, not per-request API
-- [ ] Download WorldClim v2.1 bioclimatic layers (annual mean temp, annual precipitation) for Indonesia extent
-- [ ] Download SRTM 30m DEM for Indonesia extent, derive slope raster (GDAL)
-- [ ] Download OSM Indonesia extract (Geofabrik) — extract roads + populated places layers
-- [ ] Download Ditjenbun/BPS published province-level statistics for coffee, cocoa (perennial crop series) and sugarcane (BPS's separate "Perkebunan Semusim" annual-crop series — different publication than coffee/cocoa) for later validation, not model input
-- [ ] Write a `data/README.md` documenting exact source URLs, license, and download date for every dataset (critical for reproducibility and for an "open source" project's credibility)
+- [ ] Download Indonesia ADM4 (village) boundaries from HDX (`idn_adm_bps_adm4` dataset) *(script ready: `etl/download/download_boundaries.py`)*
+- [ ] Filter boundaries to the 3 pilot provinces (full village detail) + rest of Indonesia (dissolve to kabupaten/kecamatan level for coarse view) *(script ready: `etl/boundaries.py`)*
+- [ ] Load boundaries into PostGIS, validate geometries (`ST_MakeValid`, check for self-intersections) *(script ready: `etl/load_postgis.py`)*
+- [ ] Download SoilGrids v2.0 layers for Indonesia extent (pH, clay, sand, organic carbon) — bulk GeoTIFF, not per-request API *(script ready: `etl/download/download_soilgrids.py`)*
+- [ ] Download WorldClim v2.1 bioclimatic layers (annual mean temp, annual precipitation) for Indonesia extent *(script ready: `etl/download/download_worldclim.py`)*
+- [ ] Download SRTM 30m DEM for pilot provinces, derive slope raster (GDAL) *(script ready: `etl/download/download_srtm.py`)*
+- [ ] Download OSM Indonesia extract (Geofabrik) — extract roads + populated places layers *(script ready: `etl/download/download_osm.py`)*
+- [ ] Download Ditjenbun/BPS published province-level statistics for coffee, cocoa and sugarcane for validation
+- [x] Write a `data/README.md` documenting exact source URLs, license, and download date for every dataset
 
 ## Phase 2 — Suitability Scoring Engine (Python)
 - [ ] Define crop requirement parameter tables (temp range, rainfall range, elevation range, pH range) for Coffee, Cocoa, Sugarcane — sourced from FAO Ecocrop + agronomic literature (note: Sugarcane is an annual crop with a distinct growth profile from the two perennials — a useful early test that the scoring framework generalizes beyond tree crops)
