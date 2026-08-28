@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# Data (large files — download via ETL scripts, not tracked in git)
+data/raw/
+data/processed/
+*.tif
+*.tiff
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.gpkg
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+postgres_data/
+
+# Misc
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/

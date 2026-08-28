@@ -1,0 +1,31 @@
+# Production overrides for TaniScope
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+name: taniscope
+
+services:
+  db:
+    restart: unless-stopped
+    # In production, remove port exposure (access only via internal network)
+    ports: !reset []
+
+  api:
+    restart: unless-stopped
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 2
+    # Remove volume mounts in production (use built image)
+    volumes: !reset []
+    ports: !reset []
+
+  tiles:
+    restart: unless-stopped
+    ports: !reset []
+
+  # Nginx reverse proxy — will be configured in Phase 5
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   depends_on:
+  #     - api
+  #     - tiles
