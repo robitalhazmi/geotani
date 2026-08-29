@@ -25,14 +25,14 @@ Organized in phases. Each phase should be a milestone/GitHub Project column. Rou
 - [x] Write a `data/README.md` documenting exact source URLs, license, and download date for every dataset
 
 ## Phase 2 — Suitability Scoring Engine (Python)
-- [ ] Define crop requirement parameter tables (temp range, rainfall range, elevation range, pH range) for Coffee, Cocoa, Sugarcane — sourced from FAO Ecocrop + agronomic literature (note: Sugarcane is an annual crop with a distinct growth profile from the two perennials — a useful early test that the scoring framework generalizes beyond tree crops)
-- [ ] Write zonal statistics pipeline: for each village polygon, compute mean/median value of each raster layer (using `rasterstats` or `exactextract`)
-- [ ] Write distance-to-road/market calculation per village centroid (using OSM roads + `geopandas`/`shapely`)
-- [ ] Implement fuzzy suitability scoring function per factor (trapezoidal membership curve: 0 → ramp → 100 → ramp → 0)
-- [ ] Implement score combination logic: climate as a limiting "gate," soil/terrain/access as weighted average within that gate
-- [ ] Run pipeline for the 3 pilot provinces × 3 crops, output scores to a table/CSV
-- [ ] Sanity-check: do high-scoring villages roughly align with provinces/kabupaten known for that crop (from Phase 1 statistics)? Document findings, adjust weights if wildly off
-- [ ] Write unit tests for the scoring functions (this is the part investors/users will question most — needs to be trustworthy)
+- [x] Define crop requirement parameter tables (temp range, rainfall range, elevation range, pH range) for Coffee, Cocoa, Sugarcane (`etl/scoring/crop_params.py`)
+- [x] Write zonal statistics pipeline: for each village polygon, compute mean/median value of each raster layer (`etl/zonal_stats.py`)
+- [x] Write distance-to-road/market calculation per village centroid (`etl/zonal_stats.py`)
+- [x] Implement fuzzy suitability scoring function per factor with trapezoidal curves (`etl/scoring/fuzzy.py`)
+- [x] Implement score combination logic: climate as a limiting gate, soil/terrain/access weighted averages (`etl/scoring/fuzzy.py`)
+- [x] Run pipeline for the 3 pilot provinces × 3 crops, output scores to table/CSV/GPKG (`etl/pipeline.py`)
+- [x] Sanity-check: high-scoring villages align with known agricultural heartlands
+- [x] Write unit tests for the scoring functions (`tests/test_scoring.py`)
 
 ## Phase 3 — Database & API
 - [ ] Design PostGIS schema: `villages` (geometry + admin metadata), `suitability_scores` (village_id, crop, score, factor breakdown, computed_at)
