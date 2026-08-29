@@ -48,13 +48,14 @@ Organized in phases. Each phase represents a major milestone.
 
 ## Phase 4 — Frontend Map
 - [x] Scaffold React + Vite + TypeScript project (`frontend/`)
-- [x] Integrate MapLibre GL JS, load base map (OpenFreeMap positron in `frontend/src/App.tsx`)
-- [ ] Add vector tile source pointing at Martin, style villages as a heatmap layer weighted by score
-- [x] Add crop filter UI (tabs for Coffee / Cocoa / Sugarcane in `frontend/src/App.tsx`)
-- [ ] Add click/hover interaction: show village name + score breakdown in a side panel
-- [ ] Add legend (0–100% color scale)
-- [x] Basic responsive layout (desktop-first)
-- [ ] Loading states + empty/error states
+- [x] Integrate MapLibre GL JS, load base map (OpenFreeMap positron in `frontend/src/components/MapComponent.tsx`)
+- [x] Add vector tile source pointing at Martin, style villages as a choropleth/heatmap layer weighted by crop score
+- [x] Add crop filter UI (tabs with icons for Coffee, Cocoa, Sugarcane in `Navbar.tsx`)
+- [x] Add click/hover interaction: show village name tooltip on hover and full score breakdown in side panel (`VillageDetailPanel.tsx`)
+- [x] Add legend (0–100% color scale + interactive min-score threshold filter slider in `Legend.tsx`)
+- [x] Basic responsive layout (desktop-first with slide-in drawer and mobile responsiveness)
+- [x] Quick-jump province selector (All Indonesia, East Java, Lampung, South Sulawesi)
+- [x] Loading states + empty/error states and live database connectivity indicator
 
 ## Phase 5 — Deployment & Documentation
 - [ ] Provision VPS (Hetzner or DigitalOcean, within $20–50/month budget)

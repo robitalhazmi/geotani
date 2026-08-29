@@ -1,55 +1,73 @@
-import { useEffect, useRef } from 'react'
-import maplibregl from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
+import { useEffect, useState } from 'react'
+import { CropId, HealthStatus, VillageDetail } from './types'
+import { Navbar } from './components/Navbar'
+import { MapComponent } from './components/MapComponent'
+import { Legend } from './components/Legend'
+import { VillageDetailPanel } from './components/VillageDetailPanel'
 
 function App() {
-  const mapContainer = useRef<HTMLDivElement>(null)
-  const map = useRef<maplibregl.Map | null>(null)
+  const [activeCrop, setActiveCrop] = useState<CropId>('coffee')
+  const [minScore, setMinScore] = useState<number>(0)
+  const [selectedVillage, setSelectedVillage] = useState<VillageDetail | null>(null)
+  const [regionKey, setRegionKey] = useState<string>('all')
+  const [health, setHealth] = useState<HealthStatus | null>(null)
 
+  // Fetch API / database health status
   useEffect(() => {
-    if (map.current || !mapContainer.current) return
-
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      // OpenFreeMap positron (light/clean) style — free, no API key
-      style: 'https://tiles.openfreemap.org/styles/positron',
-      center: [118.0, -3.0], // Center of Indonesia
-      zoom: 5,
-    })
-
-    map.current.addControl(new maplibregl.NavigationControl(), 'top-right')
-
-    return () => {
-      map.current?.remove()
-      map.current = null
-    }
+    fetch('http://localhost:8000/health')
+      .then((res) => res.json())
+      .then((data: HealthStatus) => setHealth(data))
+      .catch((err) => console.error('API health check error:', err))
   }, [])
 
   return (
-    <div className="flex h-screen flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between bg-white px-6 py-3 shadow-sm">
-        <h1 className="text-xl font-bold text-green-800">
-          🌾 TaniScope
-        </h1>
-        <nav className="flex gap-2">
-          {['Coffee', 'Cocoa', 'Sugarcane'].map((crop) => (
-            <button
-              key={crop}
-              className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-green-100 hover:text-green-800"
-            >
-              {crop}
-            </button>
-          ))}
-        </nav>
-      </header>
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-gray-100 font-sans antialiased">
+      {/* Top Navigation */}
+      <Navbar
+        activeCrop={activeCrop}
+        onSelectCrop={setActiveCrop}
+        onSelectRegion={setRegionKey}
+        health={health}
+      />
 
-      {/* Map */}
-      <div ref={mapContainer} className="flex-1" />
+      {/* Main Map Container */}
+      <main className="relative flex-1">
+        <MapComponent
+          activeCrop={activeCrop}
+          minScore={minScore}
+          selectedVillage={selectedVillage}
+          onSelectVillage={setSelectedVillage}
+          regionKey={regionKey}
+        />
 
-      {/* Status bar */}
-      <footer className="bg-gray-50 px-6 py-2 text-xs text-gray-500">
-        TaniScope MVP — 3 crops × 3 provinces | Data: HDX, SoilGrids, WorldClim, SRTM, OSM
+        {/* Legend and Filter Slider */}
+        <Legend
+          activeCrop={activeCrop}
+          minScore={minScore}
+          onChangeMinScore={setMinScore}
+        />
+
+        {/* Village Details Slide-in Panel */}
+        {selectedVillage && (
+          <VillageDetailPanel
+            village={selectedVillage}
+            activeCrop={activeCrop}
+            onSelectCrop={setActiveCrop}
+            onClose={() => setSelectedVillage(null)}
+          />
+        )}
+      </main>
+
+      {/* Footer Status Bar */}
+      <footer className="flex items-center justify-between border-t border-gray-200 bg-white px-6 py-2 text-[11px] text-gray-500 z-20">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-emerald-800">TaniScope v0.1.0</span>
+          <span>•</span>
+          <span>Pilot Provinces: Lampung, Jawa Timur, Sulawesi Selatan</span>
+        </div>
+        <div>
+          Data Sources: HDX (BPS ADM4), Copernicus GLO-30 DEM, WorldClim v2.1, SoilGrids v2.0, OpenStreetMap
+        </div>
       </footer>
     </div>
   )
