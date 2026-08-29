@@ -69,14 +69,21 @@ def query_scores(
         try:
             coords = [float(c.strip()) for c in bbox.split(",")]
             if len(coords) != 4:
-                raise ValueError
+                raise ValueError("Bbox requires exactly 4 coordinates")
             minx, miny, maxx, maxy = coords
+            if not (-180.0 <= minx <= 180.0 and -180.0 <= maxx <= 180.0):
+                raise ValueError("Longitude must be between -180 and 180")
+            if not (-90.0 <= miny <= 90.0 and -90.0 <= maxy <= 90.0):
+                raise ValueError("Latitude must be between -90 and 90")
+            if minx > maxx or miny > maxy:
+                raise ValueError("min coordinate cannot exceed max coordinate")
+
             envelope = func.ST_MakeEnvelope(minx, miny, maxx, maxy, 4326)
             query = query.filter(func.ST_Intersects(Village.geom, envelope))
-        except ValueError:
+        except ValueError as err:
             raise HTTPException(
                 status_code=400,
-                detail="Invalid bbox format. Expected 'minx,miny,maxx,maxy' with 4 float values.",
+                detail=f"Invalid bbox parameter: {err}. Expected 'minx,miny,maxx,maxy'.",
             )
 
     total = query.count()
