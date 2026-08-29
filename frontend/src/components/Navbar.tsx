@@ -1,0 +1,102 @@
+import React from 'react'
+import { Coffee, Sprout, Wheat, MapPin, Database } from 'lucide-react'
+import { CropId, CROPS, HealthStatus } from '../types'
+
+interface NavbarProps {
+  activeCrop: CropId
+  onSelectCrop: (crop: CropId) => void
+  onSelectRegion: (regionKey: string) => void
+  health: HealthStatus | null
+}
+
+export const Navbar: React.FC<NavbarProps> = ({
+  activeCrop,
+  onSelectCrop,
+  onSelectRegion,
+  health,
+}) => {
+  const getCropIcon = (id: CropId) => {
+    switch (id) {
+      case 'coffee':
+        return <Coffee className="h-4 w-4 mr-1.5" />
+      case 'cocoa':
+        return <Sprout className="h-4 w-4 mr-1.5" />
+      case 'sugarcane':
+        return <Wheat className="h-4 w-4 mr-1.5" />
+    }
+  }
+
+  return (
+    <header className="flex flex-wrap items-center justify-between border-b border-gray-200 bg-white/95 backdrop-blur px-6 py-3 shadow-xs z-20">
+      {/* Brand */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+          <Sprout className="h-5 w-5" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold text-gray-900 tracking-tight">TaniScope</h1>
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+              Open Source
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 hidden sm:block">
+            Agricultural Land Evaluation & Suitability Mapping (Indonesia)
+          </p>
+        </div>
+      </div>
+
+      {/* Crop Selector Tabs */}
+      <div className="flex items-center gap-1.5 rounded-xl bg-gray-100 p-1 border border-gray-200/80">
+        {(Object.keys(CROPS) as CropId[]).map((cropId) => {
+          const crop = CROPS[cropId]
+          const isActive = activeCrop === cropId
+          return (
+            <button
+              key={cropId}
+              onClick={() => onSelectCrop(cropId)}
+              className={`flex items-center rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                isActive
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+              }`}
+            >
+              {getCropIcon(cropId)}
+              {crop.name}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Region Quick Jump & Status */}
+      <div className="flex items-center gap-3">
+        {/* Region selector dropdown */}
+        <div className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5">
+          <MapPin className="h-3.5 w-3.5 text-gray-400" />
+          <select
+            onChange={(e) => onSelectRegion(e.target.value)}
+            className="bg-transparent text-xs font-medium text-gray-700 outline-none cursor-pointer"
+            defaultValue="all"
+          >
+            <option value="all">🇮🇩 All Indonesia</option>
+            <option value="east_java">Jawa Timur (East Java)</option>
+            <option value="lampung">Lampung</option>
+            <option value="south_sulawesi">Sulawesi Selatan</option>
+          </select>
+        </div>
+
+        {/* Database Status indicator */}
+        <div
+          className="hidden md:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border bg-gray-50 border-gray-200 text-gray-600"
+          title={`Total scored villages: ${health?.total_scores.toLocaleString() || 0}`}
+        >
+          <Database className="h-3.5 w-3.5 text-emerald-600" />
+          <span className="font-medium text-gray-700">
+            {health?.total_villages ? `${health.total_villages.toLocaleString()} Villages` : 'Connecting...'}
+          </span>
+          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        </div>
+      </div>
+    </header>
+  )
+}
