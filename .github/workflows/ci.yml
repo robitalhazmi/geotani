@@ -9,6 +9,25 @@ on:
 jobs:
   python-lint-test:
     runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: taniscope
+          POSTGRES_PASSWORD: taniscope_dev
+          POSTGRES_DB: taniscope
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://taniscope:taniscope_dev@localhost:5432/taniscope
+
     steps:
       - uses: actions/checkout@v4
 
@@ -17,17 +36,23 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgdal-dev gdal-bin
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install ruff pytest httpx
           pip install -r requirements.txt
+          pip install -e .
 
       - name: Lint with ruff
         run: ruff check .
 
       - name: Run tests
-        run: pytest --tb=short -q
+        run: pytest --tb=short -v
 
   frontend-lint:
     runs-on: ubuntu-latest
