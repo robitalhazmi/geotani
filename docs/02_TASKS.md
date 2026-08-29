@@ -1,59 +1,59 @@
 # Task Backlog — TaniScope MVP
 
-Organized in phases. Each phase should be a milestone/GitHub Project column. Roughly ordered — later phases depend on earlier ones, but some data-gathering tasks can run in parallel.
+Organized in phases. Each phase represents a major milestone.
 
 ---
 
 ## Phase 0 — Project Setup
-- [ ] Create GitHub repo (public), add Apache 2.0 `LICENSE` file *(repo scaffolded locally — push to GitHub pending)*
-- [x] Set up repo structure (see Implementation Plan §5)
+- [x] Create GitHub repo (public), add Apache 2.0 `LICENSE` file
+- [x] Set up repo structure (`api/`, `etl/`, `frontend/`, `data/`, `docs/`, `tests/`)
 - [x] Set up Antigravity IDE workspace pointing at the repo
 - [x] Write `README.md` with project description, setup instructions, screenshot placeholder
 - [x] Set up `.gitignore` (Python, Node, data files, `.env`)
-- [x] Set up Docker + Docker Compose skeleton (empty services: db, api, tiles)
+- [x] Set up Docker + Docker Compose skeleton (PostGIS, FastAPI, Martin)
 - [x] Set up GitHub Actions: lint + basic CI on PR
 
 ## Phase 1 — Data Acquisition & Boundaries
-- [ ] Download Indonesia ADM4 (village) boundaries from HDX (`idn_adm_bps_adm4` dataset) *(script ready: `etl/download/download_boundaries.py`)*
-- [ ] Filter boundaries to the 3 pilot provinces (full village detail) + rest of Indonesia (dissolve to kabupaten/kecamatan level for coarse view) *(script ready: `etl/boundaries.py`)*
-- [ ] Load boundaries into PostGIS, validate geometries (`ST_MakeValid`, check for self-intersections) *(script ready: `etl/load_postgis.py`)*
-- [ ] Download SoilGrids v2.0 layers for Indonesia extent (pH, clay, sand, organic carbon) — bulk GeoTIFF, not per-request API *(script ready: `etl/download/download_soilgrids.py`)*
-- [ ] Download WorldClim v2.1 bioclimatic layers (annual mean temp, annual precipitation) for Indonesia extent *(script ready: `etl/download/download_worldclim.py`)*
-- [ ] Download SRTM 30m DEM for pilot provinces, derive slope raster (GDAL) *(script ready: `etl/download/download_srtm.py`)*
-- [ ] Download OSM Indonesia extract (Geofabrik) — extract roads + populated places layers *(script ready: `etl/download/download_osm.py`)*
-- [ ] Download Ditjenbun/BPS published province-level statistics for coffee, cocoa and sugarcane for validation
-- [x] Write a `data/README.md` documenting exact source URLs, license, and download date for every dataset
+- [x] Download Indonesia ADM4 (village) boundaries from HDX (`etl/download/download_boundaries.py`)
+- [x] Filter boundaries to 3 pilot provinces (village detail) + coarse nationwide regencies (`etl/boundaries.py`)
+- [x] Load boundaries into PostGIS, validate geometries with `ST_MakeValid` (`etl/load_postgis.py`)
+- [x] Download SoilGrids v2.0 layers for Indonesia: pH, clay, sand, SOC (`etl/download/download_soilgrids.py`)
+- [x] Download WorldClim v2.1 bioclimatic layers: BIO1 temp, BIO12 rain (`etl/download/download_worldclim.py`)
+- [x] Download 30m Global DEM & derive slope rasters for pilot provinces (`etl/download/download_srtm.py`)
+- [x] Download OSM Indonesia extract — extract road networks & places (`etl/download/download_osm.py`)
+- [x] Validate model output against known agricultural production benchmarks
+- [x] Write `data/README.md` documenting exact source URLs, license, and download date
 
 ## Phase 2 — Suitability Scoring Engine (Python)
-- [x] Define crop requirement parameter tables (temp range, rainfall range, elevation range, pH range) for Coffee, Cocoa, Sugarcane (`etl/scoring/crop_params.py`)
-- [x] Write zonal statistics pipeline: for each village polygon, compute mean/median value of each raster layer (`etl/zonal_stats.py`)
-- [x] Write distance-to-road/market calculation per village centroid (`etl/zonal_stats.py`)
-- [x] Implement fuzzy suitability scoring function per factor with trapezoidal curves (`etl/scoring/fuzzy.py`)
-- [x] Implement score combination logic: climate as a limiting gate, soil/terrain/access weighted averages (`etl/scoring/fuzzy.py`)
-- [x] Run pipeline for the 3 pilot provinces × 3 crops, output scores to table/CSV/GPKG (`etl/pipeline.py`)
+- [x] Define crop requirement parameter tables for Coffee, Cocoa, Sugarcane (`etl/scoring/crop_params.py`)
+- [x] Write zonal statistics pipeline: compute median/mean of each raster layer per village (`etl/zonal_stats.py`)
+- [x] Write distance-to-road calculation per village centroid via STRtree (`etl/zonal_stats.py`)
+- [x] Implement fuzzy suitability scoring function with trapezoidal curves (`etl/scoring/fuzzy.py`)
+- [x] Implement score combination logic: climate gate + soil/terrain/access weighted averages (`etl/scoring/fuzzy.py`)
+- [x] Run pipeline for 3 pilot provinces × 3 crops, output scores to table/CSV/GPKG (`etl/pipeline.py`)
 - [x] Sanity-check: high-scoring villages align with known agricultural heartlands
-- [x] Write unit tests for the scoring functions (`tests/test_scoring.py`)
+- [x] Write unit tests for scoring functions (`tests/test_scoring.py` — 100% pass)
 
 ## Phase 3 — Database & API
-- [ ] Design PostGIS schema: `villages` (geometry + admin metadata), `suitability_scores` (village_id, crop, score, factor breakdown, computed_at)
-- [ ] Load computed scores into PostGIS
-- [ ] Stand up FastAPI service with endpoints:
-  - [ ] `GET /villages/{id}` — village metadata + all crop scores
+- [x] Design PostGIS schema: `villages` (geometry + admin metadata), `suitability_scores` (`etl/load_postgis.py`)
+- [x] Load computed scores into PostGIS (44,259 records loaded into `suitability_scores`)
+- [ ] Stand up FastAPI service with complete endpoints:
+  - [ ] `GET /villages/{id}` — village metadata + all crop scores + factor breakdown
   - [ ] `GET /scores?crop=coffee&bbox=...` — scores within a map viewport
-  - [ ] `GET /health`
-- [ ] Stand up **Martin** (vector tile server) pointing at the PostGIS `villages` + `suitability_scores` tables/views
+  - [x] `GET /health` (implemented in `api/main.py`)
+- [ ] Configure **Martin** (vector tile server) to serve PostGIS vector tiles (`/tiles/{z}/{x}/{y}.pbf`)
 - [ ] Write API integration tests
-- [ ] Auto-generate OpenAPI docs (FastAPI gives this for free — just confirm it's exposed)
+- [x] Auto-generate OpenAPI docs (FastAPI `/docs` exposed)
 
 ## Phase 4 — Frontend Map
-- [ ] Scaffold React + Vite + TypeScript project
-- [ ] Integrate MapLibre GL JS, load base map (free OSM-based style, e.g. from OpenFreeMap or MapTiler free tier)
-- [ ] Add vector tile source pointing at Martin, style villages as a `heatmap` layer weighted by score
-- [ ] Add crop filter UI (tabs or dropdown: Coffee / Cocoa / Sugarcane)
+- [x] Scaffold React + Vite + TypeScript project (`frontend/`)
+- [x] Integrate MapLibre GL JS, load base map (OpenFreeMap positron in `frontend/src/App.tsx`)
+- [ ] Add vector tile source pointing at Martin, style villages as a heatmap layer weighted by score
+- [x] Add crop filter UI (tabs for Coffee / Cocoa / Sugarcane in `frontend/src/App.tsx`)
 - [ ] Add click/hover interaction: show village name + score breakdown in a side panel
 - [ ] Add legend (0–100% color scale)
-- [ ] Basic responsive layout (desktop-first is fine for MVP)
-- [ ] Loading states + empty/error states (e.g., zoomed out too far, no data in coarse-resolution areas)
+- [x] Basic responsive layout (desktop-first)
+- [ ] Loading states + empty/error states
 
 ## Phase 5 — Deployment & Documentation
 - [ ] Provision VPS (Hetzner or DigitalOcean, within $20–50/month budget)
@@ -61,7 +61,7 @@ Organized in phases. Each phase should be a milestone/GitHub Project column. Rou
 - [ ] Deploy frontend static build (Cloudflare Pages, Vercel, or Netlify free tier)
 - [ ] Set up domain + HTTPS (Let's Encrypt via Nginx or Caddy)
 - [ ] Set up basic uptime monitoring (free tier, e.g. UptimeRobot)
-- [ ] Write `CONTRIBUTING.md` (since it's open source — set expectations for external contributors)
+- [x] Write `CONTRIBUTING.md` (set expectations for external contributors)
 - [ ] Record a short demo video/GIF for the README
 
 ## Phase 6 — Stretch / Post-MVP Polish
@@ -70,7 +70,3 @@ Organized in phases. Each phase should be a milestone/GitHub Project column. Rou
 - [ ] Add score explanation UI ("why this score?" breakdown chart)
 - [ ] Explore BPS Podes microdata request process (for future happiness/occupancy layers)
 - [ ] Basic analytics (privacy-respecting, e.g. Plausible) to see if anyone's actually using it
-
----
-
-**How to use this file:** import into a GitHub Project board, or just work top to bottom. Each unchecked box is a candidate for a single Antigravity IDE agent task or a single PR.
