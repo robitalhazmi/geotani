@@ -13,6 +13,7 @@ import math
 import subprocess
 import sys
 from pathlib import Path
+
 import requests
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -66,21 +67,21 @@ def merge_and_slope_with_rasterio(downloaded_tifs, dem_output, slope_output):
     for src in src_files:
         src.close()
 
-    out_meta.update({
-        "driver": "GTiff",
-        "height": mosaic.shape[1],
-        "width": mosaic.shape[2],
-        "transform": out_trans,
-        "compress": "deflate",
-    })
+    out_meta.update(
+        {
+            "driver": "GTiff",
+            "height": mosaic.shape[1],
+            "width": mosaic.shape[2],
+            "transform": out_trans,
+            "compress": "deflate",
+        }
+    )
 
     with rasterio.open(dem_output, "w", **out_meta) as dest:
         dest.write(mosaic)
     print(f"DEM merged: {dem_output}")
 
-    # Compute slope using numpy gradient (degrees)
     elev = mosaic[0].astype(np.float32)
-    # Resolution in meters approximation (1 deg ~ 111,320 meters at equator)
     res_x = abs(out_trans[0]) * 111320.0
     res_y = abs(out_trans[4]) * 111320.0
 
@@ -96,15 +97,21 @@ def merge_and_slope_with_rasterio(downloaded_tifs, dem_output, slope_output):
 def download_and_process_dem():
     has_gdal_cli = False
     try:
-        subprocess.run(["gdaldem", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        subprocess.run(
+            ["gdaldem", "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
         has_gdal_cli = True
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
     has_rasterio = False
     try:
-        import rasterio  # noqa: F401
         import numpy  # noqa: F401
+        import rasterio  # noqa: F401
+
         has_rasterio = True
     except ImportError:
         pass
@@ -175,13 +182,20 @@ def download_and_process_dem():
 
         if has_gdal_cli:
             print(f"\nMerging {len(downloaded_tifs)} tiles with gdalwarp into {dem_output.name}...")
-            merge_cmd = [
-                "gdalwarp",
-                "-r", "bilinear",
-                "-co", "COMPRESS=DEFLATE",
-                "-co", "TILED=YES",
-                "-overwrite",
-            ] + downloaded_tifs + [str(dem_output)]
+            merge_cmd = (
+                [
+                    "gdalwarp",
+                    "-r",
+                    "bilinear",
+                    "-co",
+                    "COMPRESS=DEFLATE",
+                    "-co",
+                    "TILED=YES",
+                    "-overwrite",
+                ]
+                + downloaded_tifs
+                + [str(dem_output)]
+            )
 
             try:
                 subprocess.run(merge_cmd, check=True)
@@ -196,8 +210,10 @@ def download_and_process_dem():
                 "slope",
                 str(dem_output),
                 str(slope_output),
-                "-co", "COMPRESS=DEFLATE",
-                "-co", "TILED=YES",
+                "-co",
+                "COMPRESS=DEFLATE",
+                "-co",
+                "TILED=YES",
             ]
             try:
                 subprocess.run(slope_cmd, check=True)
