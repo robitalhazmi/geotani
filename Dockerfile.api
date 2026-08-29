@@ -9,15 +9,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user for secure runtime
+RUN useradd --create-home --shell /bin/bash appuser
+
 WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application code and set ownership
 COPY api/ ./api/
 COPY etl/ ./etl/
+RUN chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8000
 

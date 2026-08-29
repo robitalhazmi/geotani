@@ -120,21 +120,31 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       map.getCanvas().style.cursor = 'pointer'
 
       const feat = e.features[0]
-      const name = feat.properties?.name || 'Village'
-      const kab = feat.properties?.kabupaten || ''
+      const name = String(feat.properties?.name || 'Village')
+      const kab = String(feat.properties?.kabupaten || '')
       const currentScore = Number(feat.properties?.[`score_${activeCrop}`] ?? 0).toFixed(1)
 
-      const html = `
-        <div class="p-1 font-sans text-xs">
-          <div class="font-bold text-gray-900">${name}</div>
-          <div class="text-[11px] text-gray-500">${kab}</div>
-          <div class="mt-1 font-semibold text-emerald-700">
-            Suitability: <span class="font-mono font-bold">${currentScore}%</span>
-          </div>
-        </div>
-      `
+      const container = document.createElement('div')
+      container.className = 'p-1 font-sans text-xs'
 
-      popupRef.current?.setLngLat(e.lngLat).setHTML(html).addTo(map)
+      const titleEl = document.createElement('div')
+      titleEl.className = 'font-bold text-gray-900'
+      titleEl.textContent = name
+      container.appendChild(titleEl)
+
+      if (kab) {
+        const subEl = document.createElement('div')
+        subEl.className = 'text-[11px] text-gray-500'
+        subEl.textContent = kab
+        container.appendChild(subEl)
+      }
+
+      const scoreEl = document.createElement('div')
+      scoreEl.className = 'mt-1 font-semibold text-emerald-700'
+      scoreEl.textContent = `Suitability: ${currentScore}%`
+      container.appendChild(scoreEl)
+
+      popupRef.current?.setLngLat(e.lngLat).setDOMContent(container).addTo(map)
     })
 
     map.on('mouseleave', 'villages-fill', () => {
