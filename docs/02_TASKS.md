@@ -37,12 +37,13 @@ Organized in phases. Each phase represents a major milestone.
 ## Phase 3 — Database & API
 - [x] Design PostGIS schema: `villages` (geometry + admin metadata), `suitability_scores` (`etl/load_postgis.py`)
 - [x] Load computed scores into PostGIS (44,259 records loaded into `suitability_scores`)
-- [ ] Stand up FastAPI service with complete endpoints:
-  - [ ] `GET /villages/{id}` — village metadata + all crop scores + factor breakdown
-  - [ ] `GET /scores?crop=coffee&bbox=...` — scores within a map viewport
-  - [x] `GET /health` (implemented in `api/main.py`)
-- [ ] Configure **Martin** (vector tile server) to serve PostGIS vector tiles (`/tiles/{z}/{x}/{y}.pbf`)
-- [ ] Write API integration tests
+- [x] Stand up FastAPI service with complete endpoints:
+  - [x] `GET /villages/{id}` & `GET /villages/by-pcode/{pcode}` — village metadata + all crop scores + factor breakdown
+  - [x] `GET /scores?crop=...&bbox=...` — scores within a map viewport with spatial indexing
+  - [x] `GET /crops` & `GET /crops/{id}` — crop parameter catalogue
+  - [x] `GET /health` (database connectivity & record count verification)
+- [x] Configure **Martin** (vector tile server) to serve PostGIS vector tiles (`/village_suitability/{z}/{x}/{y}`)
+- [x] Write API integration tests (`tests/test_api.py` — 18/18 tests passing)
 - [x] Auto-generate OpenAPI docs (FastAPI `/docs` exposed)
 
 ## Phase 4 — Frontend Map
