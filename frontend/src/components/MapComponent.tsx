@@ -213,6 +213,14 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
     if (selectedVillage) {
       map.setFilter('villages-highlight', ['==', ['get', 'id'], selectedVillage.id])
+      if (selectedVillage.center_lon && selectedVillage.center_lat) {
+        map.flyTo({
+          center: [selectedVillage.center_lon, selectedVillage.center_lat],
+          zoom: Math.max(map.getZoom(), 10.5),
+          essential: true,
+          duration: 1200,
+        })
+      }
     } else {
       map.setFilter('villages-highlight', ['==', ['get', 'id'], -1])
     }

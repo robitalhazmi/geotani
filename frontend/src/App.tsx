@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { CropId, HealthStatus, VillageDetail } from './types'
 import { Navbar } from './components/Navbar'
+import { FilterToolbar } from './components/FilterToolbar'
 import { MapComponent } from './components/MapComponent'
 import { Legend } from './components/Legend'
 import { VillageDetailPanel } from './components/VillageDetailPanel'
@@ -24,12 +25,19 @@ function App() {
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-gray-100 font-sans antialiased">
-      {/* Top Navigation */}
-      <Navbar
+      {/* Top Header */}
+      <Navbar health={health} />
+
+      {/* Prominent Multi-Criteria Filter Bar */}
+      <FilterToolbar
         activeCrop={activeCrop}
         onSelectCrop={setActiveCrop}
+        regionKey={regionKey}
         onSelectRegion={setRegionKey}
-        health={health}
+        minScore={minScore}
+        onChangeMinScore={setMinScore}
+        onSelectVillage={setSelectedVillage}
+        apiUrl={apiUrl}
       />
 
       {/* Main Map Container */}
@@ -42,7 +50,7 @@ function App() {
           regionKey={regionKey}
         />
 
-        {/* Legend and Filter Slider */}
+        {/* Floating Collapsible Legend Card */}
         <Legend
           activeCrop={activeCrop}
           minScore={minScore}

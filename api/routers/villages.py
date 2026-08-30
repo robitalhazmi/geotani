@@ -62,6 +62,28 @@ def build_village_detail_response(village: Village, db: Session) -> VillageDetai
     )
 
 
+@router.get("/search", response_model=list[VillageDetail])
+def search_villages(
+    q: str,
+    limit: int = 8,
+    db: Session = Depends(get_db),
+):
+    """Search villages by name, kecamatan, kabupaten, or administrative P-code."""
+    search_pattern = f"%{q.strip().lower()}%"
+    villages = (
+        db.query(Village)
+        .filter(
+            func.lower(Village.name).like(search_pattern)
+            | func.lower(Village.adm_pcode).like(search_pattern)
+            | func.lower(Village.kecamatan).like(search_pattern)
+            | func.lower(Village.kabupaten).like(search_pattern)
+        )
+        .limit(limit)
+        .all()
+    )
+    return [build_village_detail_response(v, db) for v in villages]
+
+
 @router.get("/{village_id}", response_model=VillageDetail)
 def get_village_by_id(village_id: int, db: Session = Depends(get_db)):
     """Retrieve full village metadata, geographic center, and all crop scores."""

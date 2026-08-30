@@ -81,6 +81,15 @@ def test_get_village_by_pcode():
     assert err_response.status_code == 404
 
 
+def test_search_villages():
+    """Verify searching villages by name or keyword."""
+    response = client.get("/villages/search?q=Ardirejo")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) > 0
+    assert "Ardirejo" in data[0]["name"]
+
+
 def test_query_scores_basic():
     """Verify score query with crop filter and pagination."""
     response = client.get("/scores?crop=sugarcane&limit=10")
