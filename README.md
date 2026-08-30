@@ -80,8 +80,15 @@ The frontend will be available at `http://localhost:5173` and the API at `http:/
 
 ## Documentation
 
+- [Walkthrough](docs/01_WALKTHROUGH.md) — Vision, MVP scope, user journey
 - [Tasks](docs/02_TASKS.md) — Phased task backlog & roadmap
-- [Contributing](CONTRIBUTING.md) — Contribution guidelines and development workflow
+- [Implementation Plan](docs/03_IMPLEMENTATION_PLAN.md) — Architecture, scoring methodology, data sources
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and contribution guidelines.
 
 ---
 
