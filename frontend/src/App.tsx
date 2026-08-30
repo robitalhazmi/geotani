@@ -60,14 +60,14 @@ function App() {
         )}
       </main>
 
-      {/* Footer Status Bar */}
-      <footer className="flex items-center justify-between border-t border-gray-200 bg-white px-6 py-2 text-[11px] text-gray-500 z-20">
+      {/* Footer Status Bar (Desktop & Tablet) */}
+      <footer className="hidden sm:flex items-center justify-between border-t border-gray-200 bg-white px-6 py-2 text-[11px] text-gray-500 z-20">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-emerald-800">GeoTani v0.1.0</span>
           <span>•</span>
           <span>Pilot Provinces: Lampung, Jawa Timur, Sulawesi Selatan</span>
         </div>
-        <div>
+        <div className="hidden md:block">
           Data Sources: HDX (BPS ADM4), Copernicus GLO-30 DEM, WorldClim v2.1, SoilGrids v2.0, OpenStreetMap
         </div>
       </footer>

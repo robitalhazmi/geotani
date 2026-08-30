@@ -1,5 +1,5 @@
-import React from 'react'
-import { SlidersHorizontal, Info } from 'lucide-react'
+import React, { useState } from 'react'
+import { SlidersHorizontal, Info, ChevronUp, ChevronDown, Sparkles } from 'lucide-react'
 import { CropId, CROPS } from '../types'
 
 interface LegendProps {
@@ -13,93 +13,142 @@ export const Legend: React.FC<LegendProps> = ({
   minScore,
   onChangeMinScore,
 }) => {
+  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false)
   const crop = CROPS[activeCrop]
 
   const tiers = [
-    { label: '85 - 100%', title: 'Highly Suitable', color: '#15803d' },
-    { label: '70 - 85%', title: 'Suitable', color: '#4ade80' },
-    { label: '50 - 70%', title: 'Moderately Suitable', color: '#facc15' },
-    { label: '30 - 50%', title: 'Marginally Suitable', color: '#fb923c' },
-    { label: '< 30%', title: 'Unsuitable / Restricted', color: '#f87171' },
+    { label: '85 - 100%', title: 'Highly Suitable', color: '#16a34a' },
+    { label: '70 - 85%', title: 'Suitable', color: '#84cc16' },
+    { label: '50 - 70%', title: 'Moderately Suitable', color: '#eab308' },
+    { label: '30 - 50%', title: 'Marginally Suitable', color: '#f97316' },
+    { label: '< 30%', title: 'Unsuitable / Restricted', color: '#ef4444' },
   ]
 
   return (
-    <div className="absolute bottom-6 left-6 z-10 w-80 rounded-2xl bg-white/95 backdrop-blur-md p-4 shadow-lg border border-gray-200/80 text-gray-800 transition-all">
-      {/* Crop Overview */}
-      <div className="mb-3 border-b border-gray-100 pb-2.5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-900">{crop.name}</h3>
-          <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-            {crop.category}
+    <>
+      {/* Mobile Floating Pill Trigger (Visible only on small screens when closed) */}
+      <div className="md:hidden absolute bottom-4 inset-x-4 z-10 flex justify-center">
+        <button
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-full shadow-lg border border-gray-200/90 text-xs font-semibold text-gray-800 transition-transform active:scale-95 cursor-pointer"
+        >
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-600 animate-pulse" />
+          <span>{crop.name}</span>
+          <span className="text-gray-300">|</span>
+          <span className="text-emerald-700 font-mono">≥ {minScore}%</span>
+          <span className="text-gray-300">|</span>
+          <span className="flex items-center text-gray-500 gap-0.5 text-[11px]">
+            <SlidersHorizontal className="h-3 w-3" />
+            Legend
+            {isMobileOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
           </span>
-        </div>
-        <p className="mt-1 text-xs text-gray-500 line-clamp-2">{crop.description}</p>
-        
-        {/* Quick parameters */}
-        <div className="mt-2 grid grid-cols-2 gap-1.5 text-[11px] bg-gray-50 p-2 rounded-lg border border-gray-100 text-gray-600">
-          <div><span className="font-semibold text-gray-700">Temp:</span> {crop.optimalTemp}</div>
-          <div><span className="font-semibold text-gray-700">Rain:</span> {crop.optimalRainfall}</div>
-          <div><span className="font-semibold text-gray-700">Elev:</span> {crop.optimalElevation}</div>
-          <div><span className="font-semibold text-gray-700">pH:</span> {crop.optimalSoilPh}</div>
-        </div>
+        </button>
       </div>
 
-      {/* Suitability Color Scale */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs font-semibold text-gray-700 mb-1">
-          <span>Suitability Score</span>
-          <span className="text-gray-400 font-normal">FAO Ecocrop</span>
+      {/* Main Legend Container: Floating card on desktop, Bottom Sheet Drawer on mobile */}
+      <div
+        className={`
+          z-20 transition-all duration-300 ease-in-out
+          /* Mobile styles: Bottom Sheet */
+          fixed inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white/98 backdrop-blur-md p-5 shadow-2xl border-t border-gray-200
+          ${isMobileOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}
+          /* Desktop styles: Floating Left Card */
+          md:static md:translate-y-0 md:opacity-100 md:pointer-events-auto md:absolute md:bottom-6 md:left-6 md:w-80 md:rounded-2xl md:bg-white/95 md:p-4 md:shadow-lg md:border md:border-gray-200/80 md:max-h-none md:overflow-visible
+        `}
+      >
+        {/* Mobile Drag Handle / Close Bar */}
+        <div className="md:hidden flex flex-col items-center mb-3">
+          <div className="h-1 w-12 rounded-full bg-gray-300 mb-2 cursor-pointer" onClick={() => setIsMobileOpen(false)} />
+          <div className="flex w-full items-center justify-between">
+            <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+              Suitability Legend & Parameters
+            </span>
+            <button
+              onClick={() => setIsMobileOpen(false)}
+              className="text-xs font-semibold text-gray-500 hover:text-gray-800 px-2 py-1 bg-gray-100 rounded-md cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
-        {/* Gradient Preview Bar */}
-        <div className="h-2.5 w-full rounded-full bg-gradient-to-r from-red-400 via-yellow-400 via-green-400 to-green-800 shadow-inner" />
+        {/* Crop Overview */}
+        <div className="mb-3 border-b border-gray-100 pb-2.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-900">{crop.name}</h3>
+            <span className="text-[10px] sm:text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              {crop.category}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-gray-500 line-clamp-2">{crop.description}</p>
 
-        {/* Color Tiers */}
-        <div className="grid grid-cols-1 gap-1 pt-1">
-          {tiers.map((tier) => (
-            <div key={tier.label} className="flex items-center justify-between text-[11px]">
-              <div className="flex items-center gap-2">
-                <span
-                  className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10"
-                  style={{ backgroundColor: tier.color }}
-                />
-                <span className="text-gray-600">{tier.title}</span>
+          {/* Quick parameters */}
+          <div className="mt-2 grid grid-cols-2 gap-1.5 text-[10px] sm:text-[11px] bg-gray-50 p-2 rounded-lg border border-gray-100 text-gray-600">
+            <div><span className="font-semibold text-gray-700">Temp:</span> {crop.optimalTemp}</div>
+            <div><span className="font-semibold text-gray-700">Rain:</span> {crop.optimalRainfall}</div>
+            <div><span className="font-semibold text-gray-700">Elev:</span> {crop.optimalElevation}</div>
+            <div><span className="font-semibold text-gray-700">pH:</span> {crop.optimalSoilPh}</div>
+          </div>
+        </div>
+
+        {/* Suitability Color Scale */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-700 mb-1">
+            <span>Suitability Score</span>
+            <span className="text-gray-400 font-normal text-[11px]">FAO Ecocrop</span>
+          </div>
+
+          {/* Gradient Preview Bar */}
+          <div className="h-2.5 w-full rounded-full bg-gradient-to-r from-red-500 via-yellow-500 via-lime-500 to-green-800 shadow-inner" />
+
+          {/* Color Tiers */}
+          <div className="grid grid-cols-1 gap-1 pt-1">
+            {tiers.map((tier) => (
+              <div key={tier.label} className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10 shrink-0"
+                    style={{ backgroundColor: tier.color }}
+                  />
+                  <span className="text-gray-600">{tier.title}</span>
+                </div>
+                <span className="font-mono text-gray-400 text-[10px]">{tier.label}</span>
               </div>
-              <span className="font-mono text-gray-400 text-[10px]">{tier.label}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Filter Threshold Slider */}
-      <div className="mt-4 border-t border-gray-100 pt-3">
-        <div className="flex items-center justify-between text-xs font-medium text-gray-700">
-          <span className="flex items-center gap-1">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-gray-500" />
-            Min Score Filter
-          </span>
-          <span className="font-bold text-emerald-700 font-mono">≥ {minScore}%</span>
+        {/* Filter Threshold Slider */}
+        <div className="mt-3.5 border-t border-gray-100 pt-3">
+          <div className="flex items-center justify-between text-xs font-medium text-gray-700">
+            <span className="flex items-center gap-1">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-gray-500" />
+              Min Score Filter
+            </span>
+            <span className="font-bold text-emerald-700 font-mono">≥ {minScore}%</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="95"
+            step="5"
+            value={minScore}
+            onChange={(e) => onChangeMinScore(Number(e.target.value))}
+            className="mt-2 w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+          />
+          <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <span>Show all</span>
+            <span>Only high suitability</span>
+          </div>
         </div>
-        <input
-          type="range"
-          min="0"
-          max="95"
-          step="5"
-          value={minScore}
-          onChange={(e) => onChangeMinScore(Number(e.target.value))}
-          className="mt-2 w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-        />
-        <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-          <span>Show all</span>
-          <span>Only high suitability</span>
-        </div>
-      </div>
 
-      {/* Hint footer */}
-      <div className="mt-3 flex items-center gap-1.5 text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">
-        <Info className="h-3 w-3 shrink-0 text-gray-400" />
-        <span>Click any village polygon to inspect full score factors.</span>
+        {/* Hint footer */}
+        <div className="mt-3 flex items-center gap-1.5 text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">
+          <Info className="h-3 w-3 shrink-0 text-gray-400" />
+          <span>Tap any village polygon on the map to inspect breakdown.</span>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
