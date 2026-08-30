@@ -51,12 +51,32 @@ echo ""
 case $choice in
     1)
         echo "Launching Cloudflare Tunnel on port 5173..."
+        CLOUDFLARED_CMD="npx cloudflared"
         if command -v cloudflared &> /dev/null; then
-            cloudflared tunnel --url http://localhost:5173
-        else
-            echo "Using npx cloudflared..."
-            npx cloudflared tunnel --url http://localhost:5173
+            CLOUDFLARED_CMD="cloudflared"
         fi
+
+        $CLOUDFLARED_CMD tunnel --url http://localhost:5173 2>&1 | while IFS= read -r line; do
+            # Filter routine client tile cancellation messages (user zooming/panning map)
+            if [[ "$line" =~ (context\ canceled|canceled\ by\ remote|Group\ ID\ 1000\ is\ not\ between|ICMP\ proxy) ]]; then
+                continue
+            fi
+
+            # Highlight the public demo URL
+            if [[ "$line" =~ https://[a-zA-Z0-9.-]+\.trycloudflare\.com ]]; then
+                URL=$(echo "$line" | grep -o 'https://[^ ]*trycloudflare.com')
+                echo ""
+                echo -e "\033[1;32m=================================================================\033[0m"
+                echo -e "\033[1;32m  🎉 YOUR LIVE DEMO URL IS READY:\033[0m"
+                echo -e "\033[1;36m  👉 $URL\033[0m"
+                echo -e "\033[1;32m=================================================================\033[0m"
+                echo "  (Share this link with anyone to demo GeoTani on any device)"
+                echo ""
+            fi
+
+            # Print standard setup logs
+            echo "$line"
+        done
         ;;
     2)
         echo "Launching ngrok on port 5173..."
