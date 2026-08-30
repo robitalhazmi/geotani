@@ -9,6 +9,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    allowedHosts: true, // Allow dynamic tunnel domains (trycloudflare.com, ngrok, etc.)
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
