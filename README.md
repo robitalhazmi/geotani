@@ -76,6 +76,21 @@ npm run dev
 
 The frontend will be available at `http://localhost:5173` and the API at `http://localhost:8000`.
 
+### Share Live Demo on the Internet
+
+To instantly generate a secure public HTTPS URL to share your live local map with external stakeholders:
+
+```bash
+# Option 1: Run the interactive share script
+./scripts/share_demo.sh
+
+# Option 2: Run via npm in frontend directory
+cd frontend && npm run share
+
+# Option 3: Run via ngrok
+ngrok http 5173
+```
+
 ---
 
 ## Documentation

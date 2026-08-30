@@ -12,7 +12,7 @@ function App() {
   const [regionKey, setRegionKey] = useState<string>('all')
   const [health, setHealth] = useState<HealthStatus | null>(null)
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  const apiUrl = import.meta.env.VITE_API_URL || '/api'
 
   // Fetch API / database health status
   useEffect(() => {
