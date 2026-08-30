@@ -13,7 +13,7 @@
 
 GeoTani is a free, open-source, map-based decision tool that shows **how suitable a location is for a specific crop** — rendered as a smooth heatmap across Indonesia at the village (*desa/kelurahan*) level.
 
-Think of it as an "Open Source Palantir" for Indonesian agriculture: layer multi-criteria environmental data on an interactive vector map, filter by crop, and decide where to invest.
+An interactive geospatial intelligence platform for Indonesian agriculture: layer multi-criteria environmental data on a vector map, filter by crop suitability, and make data-driven agricultural decisions.
 
 ### MVP Scope
 

@@ -1,4 +1,4 @@
-# Walkthrough — "Open Source Palantir" for Indonesia
+# Walkthrough — Geospatial Intelligence for Indonesia
 ### Official name: **GeoTani** ("geo" = spatial/mapping, "tani" = farmer/agriculture)
 
 ---
@@ -12,7 +12,7 @@ A free, open-source, map-based decision layer over Indonesia, down to the **desa
 - 😊 Citizen happiness / wellbeing indicators
 - 🏘️ Job and housing occupancy
 
-Think of it as Palantir Foundry's "layer data on a map, filter, and decide" experience — but open-source, free, and built on public Indonesian and global open data instead of proprietary enterprise data.
+A comprehensive "layer data on a map, filter, and decide" spatial decision experience — built open-source, free, and grounded on public Indonesian and global open data.
 
 That is a multi-year platform. We are **not building that yet.**
 
@@ -83,6 +83,6 @@ This is the same conceptual approach used in FAO's land evaluation / agro-ecolog
 2. Expand village-level detail to more provinces, eventually nationwide
 3. Add the "resource deposits" layer (mining/geological open data)
 4. Add "citizen happiness" and "job/housing occupancy" layers (likely sourced from BPS Podes village census data, which requires a formal data-use request — flagged as a future task, not an MVP blocker)
-5. Layer comparison tools, saved views, exports — the "Palantir-style" workbench features
+5. Layer comparison tools, saved views, exports — advanced spatial workbench features
 
 None of this needs to be decided now. The point of the MVP is to prove the map + scoring + filter mechanic works end-to-end.
