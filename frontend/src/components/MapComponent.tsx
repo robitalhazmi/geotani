@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react'
-import maplibregl, { Map, Popup } from 'maplibre-gl'
+import { useEffect, useRef } from 'react'
+import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { CropId, VillageDetail } from '../types'
 
@@ -11,26 +11,25 @@ interface MapComponentProps {
   regionKey: string
 }
 
-export const MapComponent: React.FC<MapComponentProps> = ({
+export function MapComponent({
   activeCrop,
   minScore,
   selectedVillage,
   onSelectVillage,
   regionKey,
-}) => {
+}: MapComponentProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<Map | null>(null)
-  const popupRef = useRef<Popup | null>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
+  const popupRef = useRef<maplibregl.Popup | null>(null)
 
-  // Initialize Map
   useEffect(() => {
-    if (mapRef.current || !mapContainer.current) return
+    if (!mapContainer.current) return
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
       style: 'https://tiles.openfreemap.org/styles/positron',
-      center: [115.0, -7.5], // Center near East Java & Bali initially
-      zoom: 6,
+      center: [112.5, -7.7], // Center near East Java initially
+      zoom: 7,
       minZoom: 4,
       maxZoom: 14,
     })
@@ -49,6 +48,8 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         maxzoom: 14,
       })
 
+      const beforeId = map.getLayer('building') ? 'building' : undefined
+
       // Fill Layer with score interpolation
       map.addLayer(
         {
@@ -60,7 +61,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
             'fill-color': [
               'interpolate',
               ['linear'],
-              ['coalesce', ['get', `score_${activeCrop}`], 0],
+              ['to-number', ['get', `score_${activeCrop}`], 0],
               0,
               '#fca5a5',
               30,
@@ -76,9 +77,9 @@ export const MapComponent: React.FC<MapComponentProps> = ({
             ],
             'fill-opacity': 0.72,
           },
-          filter: ['>=', ['coalesce', ['get', `score_${activeCrop}`], 0], minScore],
+          filter: ['>=', ['to-number', ['get', `score_${activeCrop}`], 0], minScore],
         },
-        'building' // Place beneath building layer if present
+        beforeId
       )
 
       // Village Boundaries Line Layer
@@ -161,7 +162,8 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
       if (villageId) {
         try {
-          const res = await fetch(`http://localhost:8000/villages/${villageId}`)
+          const apiUrl = import.meta.env.VITE_API_URL || '/api'
+          const res = await fetch(`${apiUrl}/villages/${villageId}`)
           if (res.ok) {
             const data: VillageDetail = await res.json()
             onSelectVillage(data)
@@ -188,7 +190,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     map.setPaintProperty('villages-fill', 'fill-color', [
       'interpolate',
       ['linear'],
-      ['coalesce', ['get', `score_${activeCrop}`], 0],
+      ['to-number', ['get', `score_${activeCrop}`], 0],
       0,
       '#fca5a5',
       30,
@@ -203,7 +205,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       '#052e16',
     ])
 
-    map.setFilter('villages-fill', ['>=', ['coalesce', ['get', `score_${activeCrop}`], 0], minScore])
+    map.setFilter('villages-fill', ['>=', ['to-number', ['get', `score_${activeCrop}`], 0], minScore])
   }, [activeCrop, minScore])
 
   // Update selection highlight filter
@@ -213,14 +215,6 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
     if (selectedVillage) {
       map.setFilter('villages-highlight', ['==', ['get', 'id'], selectedVillage.id])
-      if (selectedVillage.center_lon && selectedVillage.center_lat) {
-        map.flyTo({
-          center: [selectedVillage.center_lon, selectedVillage.center_lat],
-          zoom: Math.max(map.getZoom(), 10.5),
-          essential: true,
-          duration: 1200,
-        })
-      }
     } else {
       map.setFilter('villages-highlight', ['==', ['get', 'id'], -1])
     }
@@ -247,5 +241,9 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     })
   }, [regionKey])
 
-  return <div ref={mapContainer} className="relative h-full w-full" />
+  return (
+    <div className="relative h-full w-full">
+      <div ref={mapContainer} className="h-full w-full" />
+    </div>
+  )
 }

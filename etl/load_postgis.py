@@ -126,6 +126,33 @@ def load_data(engine):
             )
         )
 
+        print("Creating spatial view 'village_suitability' for Martin tile server...")
+        conn.execute(text("DROP VIEW IF EXISTS village_suitability CASCADE;"))
+        conn.execute(
+            text(
+                """
+            CREATE VIEW village_suitability AS
+            SELECT
+                v.id,
+                v.adm_pcode,
+                v.name,
+                v.kecamatan,
+                v.kabupaten,
+                v.province,
+                v.resolution,
+                v.geom,
+                MAX(CASE WHEN s.crop = 'coffee' THEN s.score END)::float AS score_coffee,
+                MAX(CASE WHEN s.crop = 'cocoa' THEN s.score END)::float AS score_cocoa,
+                MAX(CASE WHEN s.crop = 'sugarcane' THEN s.score END)::float AS score_sugarcane
+            FROM villages v
+            LEFT JOIN suitability_scores s ON v.id = s.village_id
+            GROUP BY
+                v.id, v.adm_pcode, v.name, v.kecamatan,
+                v.kabupaten, v.province, v.resolution, v.geom;
+        """
+            )
+        )
+
     # Print summary
     with engine.connect() as conn:
         total_rows = conn.execute(text("SELECT COUNT(*) FROM villages;")).scalar()
