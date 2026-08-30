@@ -12,13 +12,15 @@ function App() {
   const [regionKey, setRegionKey] = useState<string>('all')
   const [health, setHealth] = useState<HealthStatus | null>(null)
 
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
   // Fetch API / database health status
   useEffect(() => {
-    fetch('http://localhost:8000/health')
+    fetch(`${apiUrl}/health`)
       .then((res) => res.json())
       .then((data: HealthStatus) => setHealth(data))
       .catch((err) => console.error('API health check error:', err))
-  }, [])
+  }, [apiUrl])
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-gray-100 font-sans antialiased">

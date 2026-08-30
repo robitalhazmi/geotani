@@ -39,10 +39,12 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-right')
 
     map.on('load', () => {
+      const tilesUrl = import.meta.env.VITE_TILES_URL || 'http://localhost:3000'
+
       // Vector Tile Source from Martin Tile Server
       map.addSource('village_suitability', {
         type: 'vector',
-        tiles: ['http://localhost:3000/village_suitability/{z}/{x}/{y}'],
+        tiles: [`${tilesUrl}/village_suitability/{z}/{x}/{y}`],
         minzoom: 4,
         maxzoom: 14,
       })
