@@ -1,31 +1,45 @@
-# Production overrides for TaniScope
-# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-name: taniscope
+name: geotani-prod
 
 services:
   db:
-    restart: unless-stopped
-    # In production, remove port exposure (access only via internal network)
-    ports: !reset []
+    image: postgis/postgis:16-3.4
+    container_name: geotani-prod-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
-    restart: unless-stopped
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 2
-    # Remove volume mounts in production (use built image)
-    volumes: !reset []
-    ports: !reset []
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: geotani-prod-api
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://geotani.com,https://geotani.id}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
 
   tiles:
-    restart: unless-stopped
-    ports: !reset []
+    image: ghcr.io/maplibre/martin:v0.15.0
+    container_name: geotani-prod-tiles
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
 
-  # Nginx reverse proxy — will be configured in Phase 5
-  # nginx:
-  #   image: nginx:alpine
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   depends_on:
-  #     - api
-  #     - tiles
+volumes:
+  postgres_prod_data:

@@ -1,4 +1,4 @@
-# TaniScope API — Python FastAPI container
+# GeoTani API — Python FastAPI container
 FROM python:3.12-slim AS base
 
 # Install GDAL system dependencies (needed for rasterio, geopandas)

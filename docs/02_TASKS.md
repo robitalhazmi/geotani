@@ -1,4 +1,4 @@
-# Task Backlog — TaniScope MVP
+# Task Backlog — GeoTani MVP
 
 Organized in phases. Each phase represents a major milestone.
 

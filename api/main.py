@@ -1,4 +1,4 @@
-"""TaniScope FastAPI application entry point."""
+"""GeoTani FastAPI application entry point."""
 
 import logging
 import os
@@ -13,12 +13,15 @@ from api.database import get_db
 from api.models import HealthResponse, SuitabilityScore, Village
 from api.routers import crops, scores, villages
 
-logger = logging.getLogger("taniscope.api")
+logger = logging.getLogger("geotani.api")
 
 app = FastAPI(
-    title="TaniScope API",
+    title="GeoTani API",
     version="0.1.0",
-    description="Open-source agricultural land suitability analytics for Indonesia.",
+    description=(
+        "Open-source agricultural land suitability & "
+        "geospatial intelligence platform for Indonesia."
+    ),
     docs_url="/docs",
     redoc_url="/redoc",
 )

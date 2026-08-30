@@ -1,4 +1,4 @@
-"""Pytest configuration and test database fixtures for TaniScope."""
+"""Pytest configuration and test database fixtures for GeoTani."""
 
 import pytest
 from sqlalchemy import func, text

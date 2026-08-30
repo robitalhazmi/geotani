@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, text
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_PROCESSED = PROJECT_ROOT / "data" / "processed" / "boundaries"
-DEFAULT_DB_URL = "postgresql://taniscope:taniscope_dev@localhost:5432/taniscope"
+DEFAULT_DB_URL = "postgresql://geotani:geotani_dev@localhost:5432/geotani"
 
 
 def get_engine():
@@ -84,7 +84,9 @@ def force_multipolygon(geom):
 
 
 def load_data(engine):
-    in_file = DATA_PROCESSED / "taniscope_boundaries.gpkg"
+    in_file = DATA_PROCESSED / "geotani_boundaries.gpkg"
+    if not in_file.exists():
+        in_file = DATA_PROCESSED / "taniscope_boundaries.gpkg"
     if not in_file.exists():
         raise FileNotFoundError(f"Input file not found: {in_file}")
 

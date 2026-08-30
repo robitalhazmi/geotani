@@ -1,6 +1,6 @@
-# Contributing to TaniScope
+# Contributing to GeoTani
 
-Thank you for your interest in contributing! TaniScope is an open-source project and we welcome contributions of all kinds.
+Thank you for your interest in contributing! GeoTani is an open-source project and we welcome contributions of all kinds.
 
 ## Getting Started
 
@@ -16,8 +16,8 @@ Thank you for your interest in contributing! TaniScope is an open-source project
 1. Fork the repository on GitHub
 2. Clone your fork:
    ```bash
-   git clone https://github.com/<your-username>/taniscope.git
-   cd taniscope
+   git clone https://github.com/<your-username>/geotani.git
+   cd geotani
    ```
 3. Copy environment variables:
    ```bash

@@ -1,4 +1,4 @@
-"""Database ORM models and Pydantic schemas for TaniScope API."""
+"""Database ORM models and Pydantic schemas for GeoTani API."""
 
 from datetime import datetime
 from typing import Dict, List, Optional

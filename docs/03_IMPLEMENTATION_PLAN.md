@@ -1,4 +1,4 @@
-# Implementation Plan — TaniScope MVP
+# Implementation Plan — GeoTani MVP
 
 ---
 

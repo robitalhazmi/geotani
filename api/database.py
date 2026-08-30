@@ -1,4 +1,4 @@
-"""Database connection and session management for TaniScope API."""
+"""Database connection and session management for GeoTani API."""
 
 import os
 from typing import Generator
@@ -6,7 +6,7 @@ from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
-DEFAULT_DB_URL = "postgresql://taniscope:taniscope_dev@localhost:5432/taniscope"
+DEFAULT_DB_URL = "postgresql://geotani:geotani_dev@localhost:5432/geotani"
 DATABASE_URL = os.environ.get("DATABASE_URL", DEFAULT_DB_URL)
 
 engine = create_engine(

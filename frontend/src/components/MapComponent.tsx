@@ -112,7 +112,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       closeButton: false,
       closeOnClick: false,
       offset: 12,
-      className: 'taniscope-popup',
+      className: 'geotani-popup',
     })
 
     map.on('mousemove', 'villages-fill', (e) => {

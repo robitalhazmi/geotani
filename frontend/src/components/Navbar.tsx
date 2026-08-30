@@ -35,13 +35,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-gray-900 tracking-tight">TaniScope</h1>
+            <h1 className="text-lg font-bold text-gray-900 tracking-tight">GeoTani</h1>
             <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
               Open Source
             </span>
           </div>
           <p className="text-xs text-gray-500 hidden sm:block">
-            Agricultural Land Evaluation & Suitability Mapping (Indonesia)
+            Agricultural Land Evaluation & Geospatial Intelligence (Indonesia)
           </p>
         </div>
       </div>

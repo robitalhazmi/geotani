@@ -1,19 +1,19 @@
-name: taniscope
+name: geotani
 
 services:
   db:
     image: postgis/postgis:16-3.4
-    container_name: taniscope-db
+    container_name: geotani-db
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-taniscope}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taniscope_dev}
-      POSTGRES_DB: ${POSTGRES_DB:-taniscope}
+      POSTGRES_USER: ${POSTGRES_USER:-geotani}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-geotani_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-geotani}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-taniscope}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-geotani}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,9 +22,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.api
-    container_name: taniscope-api
+    container_name: geotani-api
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-taniscope}:${POSTGRES_PASSWORD:-taniscope_dev}@db:5432/${POSTGRES_DB:-taniscope}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-geotani}:${POSTGRES_PASSWORD:-geotani_dev}@db:5432/${POSTGRES_DB:-geotani}
     ports:
       - "8000:8000"
     depends_on:
@@ -37,9 +37,9 @@ services:
 
   tiles:
     image: ghcr.io/maplibre/martin:v0.15.0
-    container_name: taniscope-tiles
+    container_name: geotani-tiles
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-taniscope}:${POSTGRES_PASSWORD:-taniscope_dev}@db:5432/${POSTGRES_DB:-taniscope}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-geotani}:${POSTGRES_PASSWORD:-geotani_dev}@db:5432/${POSTGRES_DB:-geotani}
     ports:
       - "3000:3000"
     depends_on:

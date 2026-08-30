@@ -1,4 +1,4 @@
-"""TaniScope End-to-End Suitability Scoring Pipeline.
+"""GeoTani End-to-End Suitability Scoring Pipeline.
 
 Orchestrates:
   1. Environmental factor extraction (or loads cached factors)
@@ -21,7 +21,7 @@ from etl.zonal_stats import extract_all_factors
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
-DEFAULT_DB_URL = "postgresql://taniscope:taniscope_dev@localhost:5432/taniscope"
+DEFAULT_DB_URL = "postgresql://geotani:geotani_dev@localhost:5432/geotani"
 
 
 def run_scoring_pipeline(force_extract: bool = False, load_to_db: bool = True):
@@ -96,7 +96,7 @@ def run_scoring_pipeline(force_extract: bool = False, load_to_db: bool = True):
     scores_df.to_csv(scores_csv, index=False)
     print(f"  - Saved flat scores to {scores_csv} ({len(scores_df)} rows)")
 
-    enriched_gpkg = DATA_PROCESSED / "taniscope_scored_villages.gpkg"
+    enriched_gpkg = DATA_PROCESSED / "geotani_scored_villages.gpkg"
     gdf_factors.to_file(enriched_gpkg, driver="GPKG")
     print(f"  - Saved enriched spatial boundaries to {enriched_gpkg}")
 
@@ -140,27 +140,10 @@ def ingest_scores_to_postgis(scores_df: pd.DataFrame):
 
         with engine.begin() as conn:
             print("  - Clearing previous suitability scores...")
-            conn.execute(text("TRUNCATE TABLE suitability_scores RESTART IDENTITY;"))
-
+            conn.execute(text("DELETE FROM suitability_scores;"))
             print(f"  - Ingesting {len(db_scores)} score records...")
-            db_scores.to_sql(
-                "suitability_scores", conn, if_exists="append", index=False, chunksize=5000
-            )
-
-            conn.execute(
-                text(
-                    "CREATE INDEX IF NOT EXISTS idx_scores_crop_score "
-                    "ON suitability_scores (crop, score);"
-                )
-            )
-            conn.execute(
-                text(
-                    "CREATE INDEX IF NOT EXISTS idx_scores_village_crop "
-                    "ON suitability_scores (village_id, crop);"
-                )
-            )
-
-        print("  - Successfully loaded suitability scores into PostGIS!")
+            db_scores.to_sql("suitability_scores", conn, if_exists="append", index=False)
+            print("  - Successfully loaded suitability scores into PostGIS!")
 
     except Exception as e:
         print(f"  - Database ingestion skipped (could not connect to PostGIS): {e}")
@@ -169,7 +152,7 @@ def ingest_scores_to_postgis(scores_df: pd.DataFrame):
 def print_calibration_summary(gdf: gpd.GeoDataFrame):
     """Print mean score comparison per province to validate against benchmarks."""
     print("\n" + "=" * 65)
-    print("           TANISCOPE CALIBRATION & BENCHMARK SUMMARY           ")
+    print("           GEOTANI CALIBRATION & BENCHMARK SUMMARY           ")
     print("=" * 65)
 
     pilot_villages = gdf[gdf["resolution"] == "village"]

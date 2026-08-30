@@ -1,5 +1,5 @@
 # Walkthrough — "Open Source Palantir" for Indonesia
-### Working title: **TaniScope** (rename freely — "tani" = farmer, "scope" = view/lens)
+### Official name: **GeoTani** ("geo" = spatial/mapping, "tani" = farmer/agriculture)
 
 ---
 

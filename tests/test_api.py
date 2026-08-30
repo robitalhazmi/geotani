@@ -1,4 +1,4 @@
-"""Integration tests for TaniScope FastAPI backend service."""
+"""Integration tests for GeoTani FastAPI backend service."""
 
 from fastapi.testclient import TestClient
 

@@ -1,6 +1,6 @@
 # Data Sources
 
-This directory contains raw and processed geospatial data for TaniScope. **Raw and processed data files are not tracked in Git** (they are large binaries). Use the ETL scripts in `etl/download/` and `etl/` to fetch and process them.
+This directory contains raw and processed geospatial data for GeoTani. **Raw and processed data files are not tracked in Git** (they are large binaries). Use the ETL scripts in `etl/download/` and `etl/` to fetch and process them.
 
 ## Directory Structure
 
@@ -10,7 +10,7 @@ This directory contains raw and processed geospatial data for TaniScope. **Raw a
   - `osm/` — Regional OpenStreetMap shapefile extracts (Java, Sumatra, Sulawesi)
   - `elevation/tiles/` — Raw 1-arc-second SRTM HGT/ZIP tiles from NASA LP DAAC
 - `processed/` — Cleaned, clipped, and transformed outputs (gitignored)
-  - `boundaries/` — Filtered pilot villages + dissolved coarse boundaries (`taniscope_boundaries.gpkg`)
+  - `boundaries/` — Filtered pilot villages + dissolved coarse boundaries (`geotani_boundaries.gpkg`)
   - `climate/` — Clipped temperature (BIO1) and rainfall (BIO12) rasters for Indonesia
   - `soil/` — Clipped SoilGrids v2.0 rasters (pH, clay, sand, SOC at 0-5cm)
   - `elevation/` — Merged DEM and derived slope rasters for pilot provinces

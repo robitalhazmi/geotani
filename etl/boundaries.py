@@ -1,4 +1,4 @@
-"""Process Indonesia administrative boundaries for TaniScope.
+"""Process Indonesia administrative boundaries for GeoTani.
 
 1. Extracts village-level polygons (ADM4) for the 3 pilot provinces:
    - Lampung (ID18)
@@ -6,7 +6,7 @@
    - Sulawesi Selatan / South Sulawesi (ID73)
 2. Extracts regency-level polygons (ADM2) for the rest of Indonesia as coarse boundaries.
 3. Fixes any invalid geometries.
-4. Outputs the unified boundary layer to data/processed/boundaries/taniscope_boundaries.gpkg.
+4. Outputs the unified boundary layer to data/processed/boundaries/geotani_boundaries.gpkg.
 """
 
 import glob
@@ -158,7 +158,7 @@ def main():
     print(f"Fixed {invalid_count} invalid geometries.")
 
     DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
-    out_file = DATA_PROCESSED / "taniscope_boundaries.gpkg"
+    out_file = DATA_PROCESSED / "geotani_boundaries.gpkg"
     print(f"Saving to {out_file}...")
     combined.to_file(out_file, driver="GPKG")
 
