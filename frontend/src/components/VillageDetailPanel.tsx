@@ -41,10 +41,10 @@ export const VillageDetailPanel: React.FC<VillageDetailPanelProps> = ({
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white/98 backdrop-blur-md p-5 shadow-2xl border-t border-gray-200 text-gray-800 transition-all animate-in fade-in slide-in-from-bottom-6 sm:slide-in-from-right-4 duration-200 sm:fixed-none sm:absolute sm:inset-x-auto sm:bottom-auto sm:top-6 sm:right-6 sm:w-96 sm:rounded-2xl sm:max-h-[calc(100vh-6.5rem)] sm:border sm:border-gray-200/90">
+    <div className="fixed inset-x-0 bottom-0 z-30 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white/98 backdrop-blur-md p-5 shadow-2xl border-t border-gray-200 text-gray-800 transition-all animate-in fade-in slide-in-from-bottom-6 md:slide-in-from-right-4 duration-200 md:absolute md:inset-auto md:top-6 md:right-6 md:w-96 md:rounded-2xl md:max-h-[calc(100vh-6.5rem)] md:border md:border-gray-200/90">
       {/* Mobile Drag Handle */}
-      <div className="sm:hidden flex justify-center mb-2">
-        <div className="h-1 w-12 rounded-full bg-gray-300" />
+      <div className="md:hidden flex justify-center mb-2">
+        <div className="h-1.5 w-12 rounded-full bg-gray-300" />
       </div>
 
       {/* Header */}
