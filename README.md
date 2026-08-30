@@ -53,7 +53,7 @@ Think of it as an "Open Source Palantir" for Indonesian agriculture: layer multi
 
 ```bash
 # Clone the repo
-git clone https://github.com/robitalhazmi/taniscope.git geotani
+git clone https://github.com/robitalhazmi/geotani.git
 cd geotani
 
 # Copy environment variables
