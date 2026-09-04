@@ -206,3 +206,104 @@ docker compose -f docker-compose.prod.yml logs -f tiles
 git pull origin main
 docker compose -f docker-compose.prod.yml up -d --build
 ```
+
+---
+
+## 10. Multi-User Access & Collaborator Management
+
+Sharing your root password with other developers is a security risk. Instead, create separate user accounts with their own SSH public keys and specific privilege levels.
+
+### Option A: Using the Automated User Creation Tool (Fastest)
+
+Run the included helper script on your VPS:
+
+```bash
+# 1. Add a developer who can manage Docker containers & edit code (no root sudo)
+sudo ./scripts/create_vps_user.sh alice --role docker --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+
+# 2. Add a full system administrator (sudo + docker)
+sudo ./scripts/create_vps_user.sh bob --role admin --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+
+# 3. Add a read-only viewer (cannot modify containers or system files)
+sudo ./scripts/create_vps_user.sh charlie --role readonly --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+```
+
+---
+
+### Option B: Manual User Creation (Step-by-Step)
+
+If you prefer executing the Linux commands manually:
+
+#### 1. Create the user account:
+```bash
+sudo adduser developer1
+```
+
+#### 2. Configure their specific permissions:
+
+* **For a Developer (Docker & Git access without root/sudo)**:
+  ```bash
+  # Grant Docker permissions so they can run `docker compose`
+  sudo usermod -aG docker developer1
+
+  # Grant group permissions to the GeoTani project directory
+  sudo chgrp -R docker /opt/geotani
+  sudo chmod -R g+rwX /opt/geotani
+  ```
+
+* **For an Administrator (Full sudo access)**:
+  ```bash
+  sudo usermod -aG sudo,docker developer1
+  ```
+
+#### 3. Install their SSH Public Key:
+Ask the developer to generate an SSH key on their local machine (`ssh-keygen -t ed25519`) and send you their **public key** (`~/.ssh/id_ed25519.pub`).
+
+On the VPS, install their key:
+```bash
+sudo mkdir -p /home/developer1/.ssh
+sudo chmod 700 /home/developer1/.ssh
+
+# Paste their public key into authorized_keys
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... user@laptop" | sudo tee -a /home/developer1/.ssh/authorized_keys
+
+# Fix file permissions and ownership
+sudo chmod 600 /home/developer1/.ssh/authorized_keys
+sudo chown -R developer1:developer1 /home/developer1/.ssh
+```
+
+#### 4. How the collaborator connects:
+The collaborator can now SSH into the VPS directly using their own private key:
+```bash
+ssh developer1@geotani.cloud
+# or
+ssh developer1@YOUR_VPS_IP
+```
+
+---
+
+### 11. Production SSH Security Hardening (Best Practices)
+
+Once all legitimate user accounts and SSH keys are active, lock down SSH to eliminate brute-force password attacks:
+
+```bash
+sudo nano /etc/ssh/sshd_config
+```
+
+Ensure the following settings are enabled:
+```sshconfig
+# Disable root login over SSH
+PermitRootLogin no
+
+# Disable password-based logins (require SSH keys only)
+PasswordAuthentication no
+
+# Disable empty passwords
+PermitEmptyPasswords no
+```
+
+Restart the SSH service:
+```bash
+sudo systemctl restart ssh
+```
+
