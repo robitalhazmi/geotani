@@ -1,0 +1,31 @@
+# ==============================================================================
+# GeoTani — Production Frontend & Web Gateway Dockerfile
+# Multi-stage build: Vite React SPA -> Caddy Reverse Proxy & Web Server
+# ==============================================================================
+
+# --- Stage 1: Build the React Application ---
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install dependencies
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+# Copy source code and build production bundle
+COPY frontend/ ./
+RUN npm run build
+
+# --- Stage 2: Production Caddy Server ---
+FROM caddy:2-alpine
+
+# Copy custom Caddyfile
+COPY Caddyfile /etc/caddy/Caddyfile
+
+# Copy compiled static assets from builder stage
+COPY --from=builder /app/dist /usr/share/caddy
+
+# Expose HTTP and HTTPS ports
+EXPOSE 80 443 443/udp
+
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

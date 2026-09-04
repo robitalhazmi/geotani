@@ -58,13 +58,15 @@ Organized in phases. Each phase represents a major milestone.
 - [x] Loading states + empty/error states and live database connectivity indicator
 
 ## Phase 5 — Deployment & Documentation
-- [ ] Provision VPS (Hetzner or DigitalOcean, within $20–50/month budget)
-- [ ] Deploy Docker Compose stack (Postgres+PostGIS, FastAPI, Martin, Nginx reverse proxy) to VPS
-- [ ] Deploy frontend static build (Cloudflare Pages, Vercel, or Netlify free tier)
-- [ ] Set up domain + HTTPS (Let's Encrypt via Nginx or Caddy)
-- [ ] Set up basic uptime monitoring (free tier, e.g. UptimeRobot)
-- [x] Write `CONTRIBUTING.md` (set expectations for external contributors)
-- [ ] Record a short demo video/GIF for the README
+- [x] Configure production Docker Compose stack (`docker-compose.prod.yml`) with PostGIS, FastAPI, Martin, and Caddy
+- [x] Create multi-stage production Docker build (`Dockerfile.frontend`) with Caddy reverse proxy & SPA serving
+- [x] Configure automated HTTPS, HTTP/3, and security headers in `Caddyfile` for `geotani.cloud`
+- [x] Create automated VPS deployment script (`scripts/deploy.sh`) with auto-seeding & health checks
+- [x] Create automated database backup and disaster recovery utilities (`scripts/backup_db.sh`, `scripts/restore_db.sh`)
+- [x] Write comprehensive production deployment and operations guide (`docs/04_DEPLOYMENT_GUIDE.md`)
+- [x] Write `CONTRIBUTING.md` (code standards, branching model, and workflow)
+- [x] Configure instant live demo sharing (`scripts/share_demo.sh` via Cloudflare Quick Tunnel)
+- [ ] Record a short demo video/GIF for the README (post-deployment)
 
 ## Phase 6 — Stretch / Post-MVP Polish
 - [ ] Add a 4th crop to prove the pipeline generalizes

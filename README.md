@@ -98,6 +98,7 @@ ngrok http 5173
 - [Walkthrough](docs/01_WALKTHROUGH.md) — Vision, MVP scope, user journey
 - [Tasks](docs/02_TASKS.md) — Phased task backlog & roadmap
 - [Implementation Plan](docs/03_IMPLEMENTATION_PLAN.md) — Architecture, scoring methodology, data sources
+- [Production Deployment Guide](docs/04_DEPLOYMENT_GUIDE.md) — VPS setup, automated HTTPS on `geotani.cloud`, and operations
 
 ---
 

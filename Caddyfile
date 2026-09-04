@@ -1,0 +1,70 @@
+# ==============================================================================
+# GeoTani — Production Caddyfile
+# Domain: geotani.cloud (or configured via {$DOMAIN_NAME:localhost})
+# ==============================================================================
+
+{$DOMAIN_NAME:localhost} {
+    # Encoding & Compression
+    encode zstd gzip
+
+    # Security Headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        -Server
+    }
+
+    # 1. API Reverse Proxy -> FastAPI Backend
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy api:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Direct Health Check endpoint for UptimeRobot / BetterStack
+    handle /health {
+        reverse_proxy api:8000
+    }
+
+    # Interactive API Documentation
+    handle /docs* {
+        reverse_proxy api:8000
+    }
+    handle /openapi.json {
+        reverse_proxy api:8000
+    }
+
+    # 2. Vector Tile Server -> Martin (Mapbox Vector Tiles)
+    handle /tiles/* {
+        uri strip_prefix /tiles
+        reverse_proxy tiles:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # 3. Static Frontend Assets (Vite React SPA)
+    handle {
+        root * /usr/share/caddy
+        
+        # Cache static build chunks with immutable hashes
+        @static {
+            file
+            path *.js *.css *.png *.svg *.ico *.woff2 *.webp
+        }
+        header @static Cache-Control "public, max-age=31536000, immutable"
+
+        # SPA Routing: Fallback to index.html for client-side routing
+        try_files {path} /index.html
+        file_server
+    }
+}
