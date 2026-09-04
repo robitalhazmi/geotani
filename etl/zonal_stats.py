@@ -24,6 +24,7 @@ DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
 CLIMATE_DIR = DATA_PROCESSED / "climate"
 SOIL_DIR = DATA_PROCESSED / "soil"
 ELEV_DIR = DATA_PROCESSED / "elevation"
+OSM_DIR = DATA_RAW / "osm"
 BOUNDARIES_GPKG = DATA_PROCESSED / "boundaries" / "geotani_boundaries.gpkg"
 if not BOUNDARIES_GPKG.exists():
     BOUNDARIES_GPKG = DATA_PROCESSED / "boundaries" / "taniscope_boundaries.gpkg"
