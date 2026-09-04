@@ -213,28 +213,48 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 Sharing your root password with other developers is a security risk. Instead, create separate user accounts with their own SSH public keys and specific privilege levels.
 
-### Option A: Using the Automated User Creation Tool (Fastest)
+### Option A: Using the Automated User Management Tool (Fastest)
 
 Run the included helper script on your VPS:
 
 ```bash
-# 1. Add a developer who can manage Docker containers & edit code (no root sudo)
-sudo ./scripts/create_vps_user.sh alice --role docker --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+# 1. List all human users, UIDs, permission groups, and active SSH keys
+sudo ./scripts/manage_vps_users.sh --list
 
-# 2. Add a full system administrator (sudo + docker)
-sudo ./scripts/create_vps_user.sh bob --role admin --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+# 2. Add a developer (can manage Docker containers & edit code, NO root sudo)
+sudo ./scripts/manage_vps_users.sh --add alice --role docker --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
 
-# 3. Add a read-only viewer (cannot modify containers or system files)
-sudo ./scripts/create_vps_user.sh charlie --role readonly --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+# 3. Add an administrator (full sudo + docker)
+sudo ./scripts/manage_vps_users.sh --add bob --role admin --ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+
+# 4. Remove a user account (and delete their home directory)
+sudo ./scripts/manage_vps_users.sh --delete alice --remove-home
+
+# 5. Temporarily lock/disable a user account without deleting files
+sudo ./scripts/manage_vps_users.sh --lock bob
+sudo ./scripts/manage_vps_users.sh --unlock bob
 ```
 
 ---
 
-### Option B: Manual User Creation (Step-by-Step)
+### Option B: Manual User Management (Step-by-Step CLI)
 
-If you prefer executing the Linux commands manually:
+#### 1. List Existing Users on the VPS:
+```bash
+# List all human user accounts (UID >= 1000):
+awk -F: '$3 >= 1000 && $3 < 65534 {print $1, "UID:", $3, "Home:", $6}' /etc/passwd
 
-#### 1. Create the user account:
+# See who is currently logged in:
+w
+# or
+who
+
+# Check members of sudo or docker groups:
+getent group sudo
+getent group docker
+```
+
+#### 2. Create a User Account:
 ```bash
 sudo adduser developer1
 ```
@@ -278,6 +298,27 @@ The collaborator can now SSH into the VPS directly using their own private key:
 ssh developer1@geotani.cloud
 # or
 ssh developer1@YOUR_VPS_IP
+```
+
+#### 5. Delete or Remove a User Account:
+```bash
+# Terminate any active sessions/processes belonging to the user
+sudo killall -u developer1
+
+# Remove user AND delete their home directory files
+sudo deluser --remove-home developer1
+
+# Or remove user while preserving their files
+sudo deluser developer1
+```
+
+#### 6. Temporarily Lock / Disable Access (Without Deleting):
+```bash
+# Lock user password/SSH access
+sudo usermod -L developer1
+
+# Unlock user access
+sudo usermod -U developer1
 ```
 
 ---
