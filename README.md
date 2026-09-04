@@ -91,33 +91,12 @@ cd /opt/geotani
 
 #### Seeding Database on Fresh VPS
 
-Since raw/processed GeoPackage geospatial files are gitignored, populate the production database using any of these methods:
+Since raw and processed geospatial datasets are not checked into Git, run the automated end-to-end data pipeline directly on the VPS to download boundaries, extract environmental factors, compute crop suitability scores, and load them into PostGIS:
 
-* **Method 1: Sync Precomputed Datasets from Local Machine (Fastest)**
-  ```bash
-  # Run this on your local machine:
-  rsync -avzP data/processed/ YOUR_USER@YOUR_VPS_IP:/opt/geotani/data/processed/
-
-  # Then on the VPS, load into PostGIS:
-  sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.load_postgis
-  ```
-
-* **Method 2: Restore Database Snapshot**
-  ```bash
-  # On local machine:
-  ./scripts/backup_db.sh
-  scp backups/geotani_db_*.sql.gz YOUR_USER@YOUR_VPS_IP:/opt/geotani/backups/
-
-  # On VPS:
-  sudo ./scripts/restore_db.sh /opt/geotani/backups/geotani_db_*.sql.gz
-  ```
-
-* **Method 3: Run ETL Pipeline from Scratch on VPS**
-  ```bash
-  sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.download.download_boundaries
-  sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.pipeline
-  sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.load_postgis
-  ```
+```bash
+# Run the complete automated ETL pipeline inside the API container:
+sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api ./scripts/run_etl_pipeline.sh
+```
 
 ---
 
