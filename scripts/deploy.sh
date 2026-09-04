@@ -75,12 +75,26 @@ echo "5. Verifying database records..."
 RECORD_COUNT=$(docker exec geotani-prod-db psql -U "${POSTGRES_USER:-geotani}" -d "${POSTGRES_DB:-geotani}" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'villages';" 2>/dev/null | xargs || echo "0")
 
 if [ "$RECORD_COUNT" = "0" ] || [ -z "$RECORD_COUNT" ]; then
-    echo "   Database tables not found. Running ETL database loader..."
-    if [ -f "data/processed/boundaries/geotani_boundaries.gpkg" ] || [ -f "data/processed/boundaries/taniscope_boundaries.gpkg" ]; then
+    echo "   Database tables not found. Checking for precomputed datasets..."
+    if [ -f "data/processed/boundaries/geotani_boundaries.gpkg" ] || [ -f "data/processed/boundaries/taniscope_boundaries.gpkg" ] || [ -f "data/processed/geotani_scored_villages.gpkg" ] || [ -f "data/processed/taniscope_scored_villages.gpkg" ]; then
+        echo "   Found processed datasets. Running PostGIS data loader..."
         docker compose --env-file "$ENV_FILE" -f docker-compose.prod.yml run --rm api python -m etl.load_postgis
         echo "   ✓ Initial datasets loaded successfully."
     else
-        echo "   ⚠️ Processed GPKG data files not found in data/processed/. Please copy your processed data to the server."
+        echo "   ⚠️ Notice: Processed datasets are not yet present on this VPS."
+        echo "   To seed the database with village boundaries and suitability scores:"
+        echo ""
+        echo "   Option 1 (Recommended - Quick Sync from local machine):"
+        echo "     rsync -avzP data/processed/ YOUR_USER@${DOMAIN_NAME:-YOUR_VPS_IP}:/opt/geotani/data/processed/"
+        echo "     sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.load_postgis"
+        echo ""
+        echo "   Option 2 (Restore Database Snapshot):"
+        echo "     sudo ./scripts/restore_db.sh /opt/geotani/backups/geotani_db_*.sql.gz"
+        echo ""
+        echo "   Option 3 (Run ETL Pipeline from scratch on VPS):"
+        echo "     sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.download.download_boundaries"
+        echo "     sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.pipeline"
+        echo "     sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.load_postgis"
     fi
 else
     VILLAGE_ROWS=$(docker exec geotani-prod-db psql -U "${POSTGRES_USER:-geotani}" -d "${POSTGRES_DB:-geotani}" -t -c "SELECT COUNT(*) FROM villages;" 2>/dev/null | xargs || echo "0")

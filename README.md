@@ -76,6 +76,51 @@ npm run dev
 
 The frontend will be available at `http://localhost:5173` and the API at `http://localhost:8000`.
 
+### Production Deployment (VPS)
+
+To deploy to production on a VPS (e.g. Rumahweb, Hetzner, DigitalOcean) with automated HTTPS on `geotani.cloud`:
+
+```bash
+# 1. Clone the repository on your server
+git clone https://github.com/robitalhazmi/geotani.git /opt/geotani
+cd /opt/geotani
+
+# 2. Run the automated deployment script
+./scripts/deploy.sh
+```
+
+#### Seeding Database on Fresh VPS
+
+Since raw/processed GeoPackage geospatial files are gitignored, populate the production database using any of these methods:
+
+* **Method 1: Sync Precomputed Datasets from Local Machine (Fastest)**
+  ```bash
+  # Run this on your local machine:
+  rsync -avzP data/processed/ YOUR_USER@YOUR_VPS_IP:/opt/geotani/data/processed/
+
+  # Then on the VPS, load into PostGIS:
+  sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.load_postgis
+  ```
+
+* **Method 2: Restore Database Snapshot**
+  ```bash
+  # On local machine:
+  ./scripts/backup_db.sh
+  scp backups/geotani_db_*.sql.gz YOUR_USER@YOUR_VPS_IP:/opt/geotani/backups/
+
+  # On VPS:
+  sudo ./scripts/restore_db.sh /opt/geotani/backups/geotani_db_*.sql.gz
+  ```
+
+* **Method 3: Run ETL Pipeline from Scratch on VPS**
+  ```bash
+  sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.download.download_boundaries
+  sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.pipeline
+  sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api python -m etl.load_postgis
+  ```
+
+---
+
 ### Share Live Demo on the Internet
 
 To instantly generate a secure public HTTPS URL to share your live local map with external stakeholders:
