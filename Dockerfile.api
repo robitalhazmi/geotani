@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgdal-dev \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for secure runtime
@@ -18,10 +19,15 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code and set ownership
+# Copy application code, ETL modules, and automation scripts
 COPY api/ ./api/
 COPY etl/ ./etl/
-RUN chown -R appuser:appuser /app
+COPY scripts/ ./scripts/
+
+# Create data directories with permissions for appuser
+RUN mkdir -p /app/data/raw /app/data/processed \
+    && chmod +x ./scripts/*.sh \
+    && chown -R appuser:appuser /app
 
 USER appuser
 
