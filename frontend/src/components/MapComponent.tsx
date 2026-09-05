@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { CropId, VillageDetail } from '../types'
+import { CropId, PROVINCE_VIEWS, VillageDetail } from '../types'
 
 interface MapComponentProps {
   activeCrop: CropId
@@ -51,8 +51,8 @@ export function MapComponent({
     const map = new maplibregl.Map({
       container: mapContainer.current,
       style: 'https://tiles.openfreemap.org/styles/positron',
-      center: [118.0, -3.5], // Center over Indonesia
-      zoom: 5,
+      center: [118.0, -2.5], // Center over Indonesia
+      zoom: 4.8,
       minZoom: 3,
       maxZoom: 14,
     })
@@ -79,7 +79,7 @@ export function MapComponent({
       // Find the first symbol/label layer in base style so labels stay on top
       const firstSymbolLayer = map.getStyle().layers?.find((l) => l.type === 'symbol')?.id
 
-      // 1. Fill Layer with score color interpolation
+      // 1. Fill Layer with multi-scale score color interpolation
       map.addLayer(
         {
           id: 'villages-fill',
@@ -107,7 +107,19 @@ export function MapComponent({
             'fill-opacity': [
               'case',
               ['all', ['!=', ['get', `score_${activeCrop}`], null], ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], 0]],
-              0.75,
+              [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                3,
+                0.85,
+                6,
+                0.85,
+                8,
+                0.80,
+                12,
+                0.75,
+              ],
               0,
             ],
           },
@@ -120,7 +132,7 @@ export function MapComponent({
         firstSymbolLayer
       )
 
-      // 2. Village Boundaries Line Layer
+      // 2. Village Boundaries Line Layer (fades in gracefully at zoom >= 7.5 to avoid washing out low-zoom heatmap)
       map.addLayer(
         {
           id: 'villages-line',
@@ -133,16 +145,30 @@ export function MapComponent({
               'interpolate',
               ['linear'],
               ['zoom'],
+              6,
+              0.2,
+              8,
+              0.5,
+              11,
+              1.0,
+              14,
+              1.8,
+            ],
+            'line-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
               4,
-              0.1,
-              7,
+              0.0,
+              6.5,
+              0.0,
+              8,
               0.3,
               10,
-              0.8,
+              0.6,
               14,
-              1.5,
+              0.8,
             ],
-            'line-opacity': 0.6,
           },
           filter: ['!=', ['get', `score_${activeCrop}`], null],
         },
@@ -276,7 +302,19 @@ export function MapComponent({
     map.setPaintProperty('villages-fill', 'fill-opacity', [
       'case',
       ['all', ['!=', ['get', `score_${activeCrop}`], null], ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], 0]],
-      0.75,
+      [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        3,
+        0.85,
+        6,
+        0.85,
+        8,
+        0.80,
+        12,
+        0.75,
+      ],
       0,
     ])
 
@@ -308,14 +346,7 @@ export function MapComponent({
     const map = mapRef.current
     if (!map) return
 
-    const regions: Record<string, { center: [number, number]; zoom: number }> = {
-      all: { center: [118.0, -3.0], zoom: 5 },
-      east_java: { center: [112.5, -7.7], zoom: 8 },
-      lampung: { center: [105.2, -5.0], zoom: 8 },
-      south_sulawesi: { center: [120.0, -4.0], zoom: 7.5 },
-    }
-
-    const target = regions[regionKey] || regions.all
+    const target = PROVINCE_VIEWS[regionKey] || PROVINCE_VIEWS.all
     map.flyTo({
       center: target.center,
       zoom: target.zoom,
