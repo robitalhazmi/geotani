@@ -190,7 +190,40 @@ def main():
     if create_tables(engine, args.drop):
         load_data(engine)
     else:
-        print("Data load skipped.")
+        print("✓ Villages table already loaded. Ensuring spatial views and indexes exist...")
+        with engine.begin() as conn:
+            conn.execute(
+                text("CREATE INDEX IF NOT EXISTS idx_villages_geom ON villages USING GIST (geom);")
+            )
+            conn.execute(
+                text("CREATE INDEX IF NOT EXISTS idx_villages_pcode ON villages (adm_pcode);")
+            )
+            conn.execute(text("DROP VIEW IF EXISTS village_suitability CASCADE;"))
+            conn.execute(
+                text(
+                    """
+                CREATE VIEW village_suitability AS
+                SELECT
+                    v.id,
+                    v.adm_pcode,
+                    v.name,
+                    v.kecamatan,
+                    v.kabupaten,
+                    v.province,
+                    v.resolution,
+                    v.geom,
+                    MAX(CASE WHEN s.crop = 'coffee' THEN s.score END)::float AS score_coffee,
+                    MAX(CASE WHEN s.crop = 'cocoa' THEN s.score END)::float AS score_cocoa,
+                    MAX(CASE WHEN s.crop = 'sugarcane' THEN s.score END)::float AS score_sugarcane
+                FROM villages v
+                LEFT JOIN suitability_scores s ON v.id = s.village_id
+                GROUP BY
+                    v.id, v.adm_pcode, v.name, v.kecamatan,
+                    v.kabupaten, v.province, v.resolution, v.geom;
+            """
+                )
+            )
+        print("✓ View 'village_suitability' refreshed.")
 
 
 if __name__ == "__main__":

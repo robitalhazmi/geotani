@@ -63,6 +63,16 @@ def get_col(df, *candidates):
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Process administrative boundaries.")
+    parser.add_argument("--force", action="store_true", help="Force re-processing of boundaries.")
+    args = parser.parse_args()
+
+    out_file = DATA_PROCESSED / "geotani_boundaries.gpkg"
+    if not args.force and out_file.exists() and out_file.stat().st_size > 1000000:
+        print(f"✓ Found processed boundaries: {out_file.name}. Skipping.")
+        return
+
     print(f"Searching for shapefiles in {DATA_RAW}...")
     adm4_path = find_shapefile(4)
     adm2_path = find_shapefile(2)

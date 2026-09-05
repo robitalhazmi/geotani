@@ -82,13 +82,18 @@ def main():
         print(f"\n--- Processing region: {region} ---")
 
         region_dir = DATA_RAW / region
+        roads_file = region_dir / "gis_osm_roads_free_1.shp"
+        if roads_file.exists() and roads_file.stat().st_size > 1000:
+            print(f"✓ OSM road network for {region} already exists in {region_dir}. Skipping.")
+            continue
+
         zip_path = DATA_RAW / f"{region}.zip"
 
         try:
             if not zip_path.exists():
                 download_file(session, url, zip_path)
             else:
-                print(f"{zip_path} already exists, skipping download.")
+                print(f"✓ {zip_path} already downloaded. Extracting...")
 
             extracted_files, total_size = extract_target_files(zip_path, region_dir)
 
@@ -99,8 +104,9 @@ def main():
                 print(f" - {f}")
 
             # Clean up zip file
-            print(f"Removing {zip_path}...")
-            zip_path.unlink()
+            if zip_path.exists():
+                print(f"Removing {zip_path}...")
+                zip_path.unlink()
 
         except Exception as e:
             print(f"An error occurred while processing {region}: {e}")

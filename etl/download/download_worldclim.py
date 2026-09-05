@@ -105,6 +105,12 @@ def clip_raster_to_bbox(input_path, output_path, bbox):
         print(f"CRS: {src.crs}\n")
 
 def main():
+    target_files = ["wc2.1_2.5m_bio_1.tif", "wc2.1_2.5m_bio_12.tif"]
+    all_processed_exist = all((DATA_PROCESSED / f).exists() for f in target_files)
+    if all_processed_exist:
+        print(f"✓ WorldClim climate rasters already exist in {DATA_PROCESSED}. Skipping.")
+        return
+
     session = get_session()
     zip_path = DATA_RAW / "wc2.1_2.5m_bio.zip"
 
@@ -114,17 +120,19 @@ def main():
         else:
             print(f"{zip_path} already exists, skipping download.")
 
-        # Target variables: 1 (Annual Mean Temp), 12 (Annual Precipitation)
-        target_files = ["wc2.1_2.5m_bio_1.tif", "wc2.1_2.5m_bio_12.tif"]
         extracted_paths = extract_target_files(zip_path, DATA_RAW, target_files)
 
         for input_path in extracted_paths:
             output_path = DATA_PROCESSED / input_path.name
+            if output_path.exists():
+                print(f"{output_path.name} already processed. Skipping clip.")
+                continue
             clip_raster_to_bbox(input_path, output_path, INDONESIA_BBOX)
 
         # Clean up zip file
-        print(f"Removing {zip_path}...")
-        zip_path.unlink()
+        if zip_path.exists():
+            print(f"Removing {zip_path}...")
+            zip_path.unlink()
 
     except Exception as e:
         print(f"An error occurred: {e}")

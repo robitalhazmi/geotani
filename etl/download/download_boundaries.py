@@ -82,6 +82,12 @@ def extract_zip(zip_path, extract_dir):
             print(f" - {file}")
 
 def main():
+    # Check if shapefiles already exist and are non-empty
+    existing_shp = list(DATA_RAW.glob("*.shp"))
+    if existing_shp:
+        print(f"✓ Found {len(existing_shp)} boundary shapefiles in {DATA_RAW}. Skipping download.")
+        return
+
     session = get_session()
 
     print("Finding resource URL...")
@@ -93,7 +99,11 @@ def main():
     zip_path = DATA_RAW / "boundaries.zip"
 
     try:
-        download_file(session, download_url, zip_path)
+        if not zip_path.exists():
+            download_file(session, download_url, zip_path)
+        else:
+            print(f"✓ {zip_path} already downloaded. Extracting...")
+
         extract_zip(zip_path, DATA_RAW)
 
         # Clean up zip file
