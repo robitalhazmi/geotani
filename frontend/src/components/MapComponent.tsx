@@ -104,9 +104,18 @@ export function MapComponent({
               100,
               '#065f46',
             ],
-            'fill-opacity': 0.75,
+            'fill-opacity': [
+              'case',
+              ['all', ['!=', ['get', `score_${activeCrop}`], null], ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], 0]],
+              0.75,
+              0,
+            ],
           },
-          filter: ['>=', ['to-number', ['get', `score_${activeCrop}`], 0], minScore],
+          filter: [
+            'all',
+            ['!=', ['get', `score_${activeCrop}`], null],
+            ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
+          ],
         },
         firstSymbolLayer
       )
@@ -135,6 +144,7 @@ export function MapComponent({
             ],
             'line-opacity': 0.6,
           },
+          filter: ['!=', ['get', `score_${activeCrop}`], null],
         },
         firstSymbolLayer
       )
@@ -167,13 +177,21 @@ export function MapComponent({
 
     map.on('mousemove', 'villages-fill', (e) => {
       if (!e.features || !e.features[0]) return
-      map.getCanvas().style.cursor = 'pointer'
 
       const feat = e.features[0]
+      const rawScore = feat.properties?.[`score_${activeCrop}`]
+      if (rawScore === null || rawScore === undefined || rawScore === '') {
+        map.getCanvas().style.cursor = ''
+        popupRef.current?.remove()
+        return
+      }
+
+      map.getCanvas().style.cursor = 'pointer'
+
       const name = String(feat.properties?.name || 'Region')
       const kab = String(feat.properties?.kabupaten || '')
       const prov = String(feat.properties?.province || '')
-      const currentScore = Number(feat.properties?.[`score_${activeCrop}`] ?? 0).toFixed(1)
+      const currentScore = Number(rawScore).toFixed(1)
 
       const container = document.createElement('div')
       container.className = 'p-1.5 font-sans text-xs'
@@ -206,8 +224,11 @@ export function MapComponent({
     // Click handler to select village and fetch details
     map.on('click', 'villages-fill', async (e) => {
       if (!e.features || !e.features[0]) return
-      const villageId = e.features[0].properties?.id
+      const feat = e.features[0]
+      const rawScore = feat.properties?.[`score_${activeCrop}`]
+      if (rawScore === null || rawScore === undefined || rawScore === '') return
 
+      const villageId = feat.properties?.id
       if (villageId) {
         try {
           const res = await fetch(`${apiBase}/villages/${villageId}`)
@@ -252,7 +273,22 @@ export function MapComponent({
       '#065f46',
     ])
 
-    map.setFilter('villages-fill', ['>=', ['to-number', ['get', `score_${activeCrop}`], 0], minScore])
+    map.setPaintProperty('villages-fill', 'fill-opacity', [
+      'case',
+      ['all', ['!=', ['get', `score_${activeCrop}`], null], ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], 0]],
+      0.75,
+      0,
+    ])
+
+    map.setFilter('villages-fill', [
+      'all',
+      ['!=', ['get', `score_${activeCrop}`], null],
+      ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
+    ])
+
+    if (map.getLayer('villages-line')) {
+      map.setFilter('villages-line', ['!=', ['get', `score_${activeCrop}`], null])
+    }
   }, [activeCrop, minScore])
 
   // Update selection highlight filter
