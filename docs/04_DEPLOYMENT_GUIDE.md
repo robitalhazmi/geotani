@@ -34,13 +34,16 @@ flowchart TD
 
 ---
 
-## 2. Server Prerequisites
+## 2. Server Prerequisites & System Requirements
 
-### Recommended VPS Specifications:
-* **RAM**: 2 GB – 4 GB (4 GB recommended for ETL pipelines and tile concurrency)
-* **vCPU**: 1 – 2 vCPUs
-* **Disk**: 25 GB+ SSD / NVMe
-* **OS**: Ubuntu 22.04 LTS or 24.04 LTS (or Debian 12)
+### Hardware Sizing Matrix
+
+| Resource | Minimum Requirement | Recommended | Breakdown |
+|---|---|---|---|
+| 💾 **Disk Storage** | **10 GB** SSD | **20 GB – 25 GB** NVMe | • ~1.2 GB base Docker images<br>• ~100 MB PostGIS volume<br>• ~3–5 GB for ETL boundary & raster files<br>• ~2–4 GB for swapfile and daily backup snapshots |
+| 🧠 **RAM / Memory** | **2 GB** (+ 2GB Swap) | **4 GB+** | 2 GB is sufficient for production serving; 4 GB speeds up parallel raster zonal stats |
+| ⚙️ **CPU** | 1 vCPU | 2+ vCPUs | Standard `x86_64` (Intel/AMD) or `arm64` |
+| 🐧 **Operating System** | Ubuntu 22.04 / 24.04 LTS | Ubuntu 24.04 LTS | Debian 12 also fully supported |
 
 ---
 

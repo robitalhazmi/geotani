@@ -64,7 +64,17 @@ flowchart TD
 
 ## 💻 Local Development Setup
 
-### 1. Prerequisites
+### 1. Prerequisites & System Requirements
+
+#### Hardware & Storage Requirements
+
+| Resource | Minimum Requirement | Recommended | Purpose |
+|---|---|---|---|
+| 💾 **Storage / Disk** | **10 GB** SSD / NVMe | **20 GB+** SSD / NVMe | ~1 GB for Docker images, ~100 MB PostGIS database, ~3–5 GB for ETL raster downloads & backup snapshots |
+| 🧠 **RAM / Memory** | **2 GB** (+ 2GB Swap) | **4 GB+** | 2 GB is sufficient for web map serving; 4 GB speeds up parallel raster zonal calculations |
+| ⚙️ **CPU** | 1 vCPU / Core | 2+ vCPUs | Standard `x86_64` or `arm64` architecture |
+
+#### Software Dependencies
 * **Docker & Docker Compose v2**
 * **Python 3.12+**
 * **Node.js 20+**
