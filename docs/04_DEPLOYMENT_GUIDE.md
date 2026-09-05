@@ -217,6 +217,29 @@ git pull origin main
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
+### Troubleshooting:
+
+* **PostgreSQL Password Authentication Failed**:
+  If you changed `POSTGRES_PASSWORD` in `.env.prod` after the database container was already created, synchronize the password in Postgres:
+  ```bash
+  source .env.prod
+  docker exec -i geotani-prod-db psql -U geotani -d postgres -c "ALTER USER \"$POSTGRES_USER\" WITH PASSWORD '$POSTGRES_PASSWORD';"
+  ```
+  Or if the database is still empty and you want a clean reset:
+  ```bash
+  docker compose -f docker-compose.prod.yml down -v
+  ./scripts/deploy.sh
+  ```
+
+* **Low-Memory VPS (OOM Killer)**:
+  If running on a 1GB–2GB RAM VPS, ensure swap space is enabled:
+  ```bash
+  sudo fallocate -l 2G /swapfile
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
+  ```
+
 ---
 
 ## 10. Multi-User Access & Collaborator Management

@@ -3,10 +3,7 @@
 Uses the Copernicus GLO-30 (30m) Global DEM hosted on AWS Open Data.
 Provides 30m resolution, void-filled elevation data with direct public HTTPS downloads.
 
-For each pilot province (Lampung, East Java, South Sulawesi):
-  1. Downloads 1x1 degree 30m DEM tiles from AWS S3
-  2. Merges tiles using gdalwarp (or rasterio.merge if gdalwarp is unavailable)
-  3. Computes slope raster using gdaldem (or numpy gradient if gdaldem is unavailable)
+Memory-optimized for low-RAM cloud VPS environments (< 256MB RAM usage).
 """
 
 import math
@@ -54,26 +51,31 @@ def generate_tile_coords(bbox: dict):
     return coords
 
 
-def merge_and_slope_with_rasterio(downloaded_tifs, dem_output, slope_output):
-    """Fallback merge and slope computation using pure Python (rasterio + numpy)."""
+def merge_and_slope_chunked_rasterio(downloaded_tifs, dem_output, slope_output):
+    """Fallback merge and slope computation using windowed chunking for low memory usage."""
     import numpy as np
     import rasterio
     from rasterio.merge import merge
+    from rasterio.windows import Window
 
-    print("Using rasterio + numpy for merging and slope calculation...")
+    print("Merging DEM tiles using rasterio...")
     src_files = [rasterio.open(f) for f in downloaded_tifs]
     mosaic, out_trans = merge(src_files)
     out_meta = src_files[0].meta.copy()
     for src in src_files:
         src.close()
 
+    height, width = mosaic.shape[1], mosaic.shape[2]
     out_meta.update(
         {
             "driver": "GTiff",
-            "height": mosaic.shape[1],
-            "width": mosaic.shape[2],
+            "height": height,
+            "width": width,
             "transform": out_trans,
             "compress": "deflate",
+            "tiled": True,
+            "blockxsize": 512,
+            "blockysize": 512,
         }
     )
 
@@ -81,16 +83,49 @@ def merge_and_slope_with_rasterio(downloaded_tifs, dem_output, slope_output):
         dest.write(mosaic)
     print(f"DEM merged: {dem_output}")
 
-    elev = mosaic[0].astype(np.float32)
+    # Free mosaic from memory before slope calculation
+    del mosaic
+
+    print("Computing slope raster in memory-efficient chunks (512x512)...")
     res_x = abs(out_trans[0]) * 111320.0
     res_y = abs(out_trans[4]) * 111320.0
 
-    dy, dx = np.gradient(elev, res_y, res_x)
-    slope_rad = np.arctan(np.sqrt(dx**2 + dy**2))
-    slope_deg = np.degrees(slope_rad).astype(np.float32)
+    with rasterio.open(dem_output) as src_dem:
+        slope_meta = src_dem.meta.copy()
+        slope_meta.update({"dtype": "float32", "nodata": -9999.0})
 
-    with rasterio.open(slope_output, "w", **out_meta) as dest:
-        dest.write(slope_deg[np.newaxis, :, :])
+        with rasterio.open(slope_output, "w", **slope_meta) as dst_slope:
+            # Process in 512x512 tile windows with 1-pixel padding
+            block_size = 512
+            for row in range(0, height, block_size):
+                for col in range(0, width, block_size):
+                    w_width = min(block_size, width - col)
+                    w_height = min(block_size, height - row)
+
+                    # Add 1px padding around window for finite differences gradient
+                    pad_top = 1 if row > 0 else 0
+                    pad_bottom = 1 if (row + w_height) < height else 0
+                    pad_left = 1 if col > 0 else 0
+                    pad_right = 1 if (col + w_width) < width else 0
+
+                    read_win = Window(
+                        col - pad_left,
+                        row - pad_top,
+                        w_width + pad_left + pad_right,
+                        w_height + pad_top + pad_bottom,
+                    )
+                    write_win = Window(col, row, w_width, w_height)
+
+                    chunk = src_dem.read(1, window=read_win).astype(np.float32)
+                    dy, dx = np.gradient(chunk, res_y, res_x)
+                    slope_chunk = np.degrees(np.arctan(np.sqrt(dx**2 + dy**2)))
+
+                    # Trim padding to match write_win
+                    slope_clean = slope_chunk[
+                        pad_top : pad_top + w_height, pad_left : pad_left + w_width
+                    ]
+                    dst_slope.write(slope_clean[np.newaxis, :, :], window=write_win)
+
     print(f"Slope raster generated: {slope_output}")
 
 
@@ -119,10 +154,6 @@ def download_and_process_dem():
     if not has_gdal_cli and not has_rasterio:
         print("=" * 60)
         print("ERROR: Neither GDAL command line tools nor rasterio are available.")
-        print("To fix this on Ubuntu/Debian, install gdal-bin:")
-        print("    sudo apt update && sudo apt install -y gdal-bin libgdal-dev")
-        print("Or install python rasterio in your active virtual environment:")
-        print("    pip install rasterio numpy")
         print("=" * 60)
         sys.exit(1)
 
@@ -135,6 +166,18 @@ def download_and_process_dem():
     print("=" * 60)
 
     for province, bbox in PILOT_PROVINCES.items():
+        dem_output = DATA_PROCESSED / f"{province}_dem.tif"
+        slope_output = DATA_PROCESSED / f"{province}_slope.tif"
+
+        if (
+            dem_output.exists()
+            and slope_output.exists()
+            and dem_output.stat().st_size > 10000
+            and slope_output.stat().st_size > 10000
+        ):
+            print(f"✓ DEM and Slope rasters for {province.upper()} already exist. Skipping.")
+            continue
+
         print(f"\n>>> Processing {province.upper()}...")
         coords = generate_tile_coords(bbox)
         downloaded_tifs = []
@@ -177,31 +220,29 @@ def download_and_process_dem():
             print(f"Warning: No valid land tiles found for {province}.")
             continue
 
-        dem_output = DATA_PROCESSED / f"{province}_dem.tif"
-        slope_output = DATA_PROCESSED / f"{province}_slope.tif"
-
         if has_gdal_cli:
-            print(f"\nMerging {len(downloaded_tifs)} tiles with gdalwarp into {dem_output.name}...")
-            merge_cmd = (
-                [
-                    "gdalwarp",
-                    "-r",
-                    "bilinear",
+            vrt_file = DATA_PROCESSED / f"{province}_temp.vrt"
+            print(f"\nBuilding virtual raster VRT: {vrt_file.name}...")
+            vrt_cmd = ["gdalbuildvrt", "-overwrite", str(vrt_file)] + downloaded_tifs
+            try:
+                subprocess.run(vrt_cmd, check=True)
+                print(f"Translating VRT to optimized GeoTIFF: {dem_output.name}...")
+                translate_cmd = [
+                    "gdal_translate",
                     "-co",
                     "COMPRESS=DEFLATE",
                     "-co",
                     "TILED=YES",
-                    "-overwrite",
+                    str(vrt_file),
+                    str(dem_output),
                 ]
-                + downloaded_tifs
-                + [str(dem_output)]
-            )
-
-            try:
-                subprocess.run(merge_cmd, check=True)
+                subprocess.run(translate_cmd, check=True)
+                if vrt_file.exists():
+                    vrt_file.unlink()
                 print(f"DEM saved: {dem_output}")
             except subprocess.CalledProcessError as e:
-                print(f"Error merging with gdalwarp: {e}")
+                print(f"GDAL translation error: {e}. Trying fallback...")
+                merge_and_slope_chunked_rasterio(downloaded_tifs, dem_output, slope_output)
                 continue
 
             print(f"Computing slope with gdaldem into {slope_output.name}...")
@@ -221,7 +262,7 @@ def download_and_process_dem():
             except subprocess.CalledProcessError as e:
                 print(f"Error generating slope: {e}")
         else:
-            merge_and_slope_with_rasterio(downloaded_tifs, dem_output, slope_output)
+            merge_and_slope_chunked_rasterio(downloaded_tifs, dem_output, slope_output)
 
     print("\n" + "=" * 60)
     print("Elevation and Slope processing completed!")

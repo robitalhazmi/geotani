@@ -69,6 +69,11 @@ if [ $RETRIES -le 0 ]; then
 fi
 echo "   ✓ PostGIS database is ready and healthy."
 
+# Synchronize database password in PostgreSQL to match current .env.prod
+echo "   Synchronizing database credentials..."
+docker exec -i geotani-prod-db psql -U "${POSTGRES_USER:-geotani}" -d postgres -c "ALTER USER \"${POSTGRES_USER:-geotani}\" WITH PASSWORD '$POSTGRES_PASSWORD';" >/dev/null 2>&1 || \
+docker exec -i geotani-prod-db psql -U postgres -c "ALTER USER \"${POSTGRES_USER:-geotani}\" WITH PASSWORD '$POSTGRES_PASSWORD';" >/dev/null 2>&1 || true
+
 # 5. Check if database is populated
 echo ""
 echo "5. Verifying database records..."
