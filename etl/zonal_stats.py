@@ -208,7 +208,17 @@ def extract_road_distances(gdf: gpd.GeoDataFrame) -> pd.DataFrame:
             n_pts = len(prov_indices)
             print(f"  - Querying nearest road network for {prov_name} ({n_pts} villages)...")
             try:
-                roads_gdf = gpd.read_file(roads_path)
+                # Filter roads to province bounding box with 0.1 degree buffer
+                prov_wgs84 = gdf.loc[prov_indices]
+                minx, miny, maxx, maxy = prov_wgs84.total_bounds
+                bbox_buffered = (minx - 0.1, miny - 0.1, maxx + 0.1, maxy + 0.1)
+
+                roads_gdf = gpd.read_file(
+                    roads_path,
+                    bbox=bbox_buffered,
+                    columns=["fclass", "geometry"],
+                    engine="pyogrio",
+                )
                 roads_filtered = roads_gdf[roads_gdf["fclass"].isin(drivable_fclasses)]
                 roads_3857 = roads_filtered.to_crs(epsg=3857)
 
