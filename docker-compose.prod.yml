@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-geotani}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-geotani_prod}
       POSTGRES_DB: ${POSTGRES_DB:-geotani}
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
@@ -24,7 +24,7 @@ services:
     container_name: geotani-prod-api
     restart: always
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-geotani}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-geotani}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-geotani}:${POSTGRES_PASSWORD:-geotani_prod}@db:5432/${POSTGRES_DB:-geotani}
       CORS_ORIGINS: ${CORS_ORIGINS:-https://geotani.cloud,https://www.geotani.cloud}
     volumes:
       - geotani_data:/app/data
@@ -38,7 +38,7 @@ services:
     container_name: geotani-prod-tiles
     restart: always
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-geotani}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-geotani}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-geotani}:${POSTGRES_PASSWORD:-geotani_prod}@db:5432/${POSTGRES_DB:-geotani}
     depends_on:
       db:
         condition: service_healthy
