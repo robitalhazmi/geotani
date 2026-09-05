@@ -105,27 +105,22 @@ export function MapComponent({
               '#065f46',
             ],
             'fill-opacity': [
-              'case',
-              ['all', ['!=', ['get', `score_${activeCrop}`], null], ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], 0]],
-              [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                3,
-                0.85,
-                6,
-                0.85,
-                8,
-                0.80,
-                12,
-                0.75,
-              ],
-              0,
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              3,
+              0.85,
+              6,
+              0.85,
+              8,
+              0.80,
+              12,
+              0.75,
             ],
           },
           filter: [
             'all',
-            ['!=', ['get', `score_${activeCrop}`], null],
+            ['has', `score_${activeCrop}`],
             ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
           ],
         },
@@ -170,7 +165,11 @@ export function MapComponent({
               0.8,
             ],
           },
-          filter: ['!=', ['get', `score_${activeCrop}`], null],
+          filter: [
+            'all',
+            ['has', `score_${activeCrop}`],
+            ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
+          ],
         },
         firstSymbolLayer
       )
@@ -300,32 +299,31 @@ export function MapComponent({
     ])
 
     map.setPaintProperty('villages-fill', 'fill-opacity', [
-      'case',
-      ['all', ['!=', ['get', `score_${activeCrop}`], null], ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], 0]],
-      [
-        'interpolate',
-        ['linear'],
-        ['zoom'],
-        3,
-        0.85,
-        6,
-        0.85,
-        8,
-        0.80,
-        12,
-        0.75,
-      ],
-      0,
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      3,
+      0.85,
+      6,
+      0.85,
+      8,
+      0.80,
+      12,
+      0.75,
     ])
 
     map.setFilter('villages-fill', [
       'all',
-      ['!=', ['get', `score_${activeCrop}`], null],
+      ['has', `score_${activeCrop}`],
       ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
     ])
 
     if (map.getLayer('villages-line')) {
-      map.setFilter('villages-line', ['!=', ['get', `score_${activeCrop}`], null])
+      map.setFilter('villages-line', [
+        'all',
+        ['has', `score_${activeCrop}`],
+        ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
+      ])
     }
   }, [activeCrop, minScore])
 
