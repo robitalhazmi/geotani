@@ -384,3 +384,27 @@ Restart the SSH service:
 sudo systemctl restart ssh
 ```
 
+---
+
+### 12. VPS Disk Space Optimization & Routine Maintenance
+
+To keep your VPS storage clean and reclaim **10–12+ GB** after builds and ETL data runs:
+
+```bash
+# 1. Prune Docker BuildKit build cache (~5 GB)
+sudo docker builder prune -a -f
+
+# 2. Prune old/dangling container images
+sudo docker image prune -a -f
+
+# 3. Clean raw downloaded GIS archives from the named volume (~5–6 GB)
+sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api rm -rf /app/data/raw/* /app/data/processed/elevation/*
+
+# 4. Vacuum systemd journal logs to 100MB max
+sudo journalctl --vacuum-size=100M
+
+# 5. Clean APT package cache
+sudo apt-get clean && sudo apt-get autoremove --purge -y
+```
+
+

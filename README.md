@@ -26,7 +26,7 @@ GeoTani is an interactive geospatial intelligence platform that calculates and v
   * 🧪 **Soil**: pH ($H_2O$), Clay %, Sand %, and Soil Organic Carbon (SOC) from **ISRIC SoilGrids v2.0**
   * ⛰️ **Terrain**: 30m Elevation & Slope gradients from **Copernicus GLO-30 DEM**
   * 🛣️ **Accessibility**: Euclidean proximity to drivable road networks from **OpenStreetMap**
-* **Smooth Vector Heatmap**: MapLibre GL JS GPU-accelerated client-side rendering powered by **Martin Vector Tile Server**.
+* **Unified Single-Resolution Heatmap**: Seamless vector choropleth mapping across all zoom levels (zoom 3 to 14) powered by **Martin Vector Tile Server** and MapLibre GL JS, featuring zoom-adaptive boundary lines and unified color ramps.
 * **Zero-Config Production HTTPS**: Fully containerized multi-stage Docker build with automated **Let's Encrypt / ZeroSSL TLS (HTTP/3 + QUIC)** via Caddy.
 * **Multi-Crop Catalogs**: Calibrated suitability curves for **Coffee (Robusta)**, **Cocoa**, and **Sugarcane**.
 
@@ -217,6 +217,24 @@ sudo docker compose -f docker-compose.prod.yml logs -f gateway
 
 # View API logs
 sudo docker compose -f docker-compose.prod.yml logs -f api
+
+# Restart Martin tile server (flushes in-memory vector tile cache)
+sudo docker compose --env-file .env.prod -f docker-compose.prod.yml restart tiles
+```
+
+### VPS Disk Space Optimization *(Reclaim ~10–12 GB)*
+```bash
+# 1. Prune Docker BuildKit build cache (~5 GB)
+sudo docker builder prune -a -f
+
+# 2. Prune old/dangling container images
+sudo docker image prune -a -f
+
+# 3. Clean raw downloaded GIS archives from the named volume (~5–6 GB)
+sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api rm -rf /app/data/raw/* /app/data/processed/elevation/*
+
+# 4. Vacuum systemd journal logs to 100MB max
+sudo journalctl --vacuum-size=100M
 ```
 
 ---

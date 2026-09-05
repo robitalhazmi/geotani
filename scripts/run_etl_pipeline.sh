@@ -64,3 +64,7 @@ echo ""
 echo "================================================================="
 echo "  🎉 ETL PIPELINE COMPLETE: PostGIS & Vector Tiles Populated!"
 echo "================================================================="
+echo "  💡 Note: On production VPS, remember to restart the tile server:"
+echo "     sudo docker compose --env-file .env.prod -f docker-compose.prod.yml restart tiles"
+echo "================================================================="
+
