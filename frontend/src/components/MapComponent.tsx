@@ -84,13 +84,14 @@ export function MapComponent({
       // Find the first symbol/label layer in base style so labels stay on top
       const firstSymbolLayer = map.getStyle().layers?.find((l) => l.type === 'symbol')?.id
 
-      // 1. Fill Layer with multi-scale score color interpolation
+      // 1. Coarse Fill Layer (Zoom 3 to 8 — Fast nationwide regency-level heatmap)
       map.addLayer(
         {
-          id: 'villages-fill',
+          id: 'regions-coarse-fill',
           type: 'fill',
           source: 'village_suitability',
           'source-layer': 'village_suitability',
+          maxzoom: 8,
           paint: {
             'fill-color': [
               'interpolate',
@@ -109,19 +110,46 @@ export function MapComponent({
               100,
               '#065f46',
             ],
-            'fill-opacity': [
+            'fill-opacity': 0.85,
+          },
+          filter: [
+            'all',
+            ['==', ['get', 'resolution'], 'coarse'],
+            ['has', `score_${activeCrop}`],
+            ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
+          ],
+        },
+        firstSymbolLayer
+      )
+
+      // 2. Village Fill Layer (Zoom 7.5 to 14 — Detailed micro-level village heatmap)
+      map.addLayer(
+        {
+          id: 'villages-fill',
+          type: 'fill',
+          source: 'village_suitability',
+          'source-layer': 'village_suitability',
+          minzoom: 7.5,
+          maxzoom: 14,
+          paint: {
+            'fill-color': [
               'interpolate',
               ['linear'],
-              ['zoom'],
-              3,
-              0.85,
-              6,
-              0.85,
-              8,
-              0.80,
-              12,
-              0.75,
+              ['to-number', ['get', `score_${activeCrop}`], 0],
+              0,
+              '#ef4444',
+              30,
+              '#f97316',
+              50,
+              '#eab308',
+              70,
+              '#84cc16',
+              85,
+              '#16a34a',
+              100,
+              '#065f46',
             ],
+            'fill-opacity': 0.78,
           },
           filter: [
             'all',
@@ -132,36 +160,32 @@ export function MapComponent({
         firstSymbolLayer
       )
 
-      // 2. Village Boundaries Line Layer (fades in gracefully at zoom >= 7.5 to avoid washing out low-zoom heatmap)
+      // 3. Village Boundaries Line Layer (Zoom 8 to 14 — Crisp white boundary lines)
       map.addLayer(
         {
           id: 'villages-line',
           type: 'line',
           source: 'village_suitability',
           'source-layer': 'village_suitability',
+          minzoom: 8,
+          maxzoom: 14,
           paint: {
             'line-color': '#ffffff',
             'line-width': [
               'interpolate',
               ['linear'],
               ['zoom'],
-              6,
-              0.2,
               8,
-              0.5,
+              0.4,
               11,
-              1.0,
+              0.8,
               14,
-              1.8,
+              1.5,
             ],
             'line-opacity': [
               'interpolate',
               ['linear'],
               ['zoom'],
-              4,
-              0.0,
-              6.5,
-              0.0,
               8,
               0.3,
               10,
@@ -179,7 +203,7 @@ export function MapComponent({
         firstSymbolLayer
       )
 
-      // 3. Selection Highlight Layer
+      // 4. Selection Highlight Layer
       map.addLayer(
         {
           id: 'villages-highlight',
@@ -205,101 +229,105 @@ export function MapComponent({
       className: 'geotani-popup',
     })
 
-    map.on('mousemove', 'villages-fill', (e) => {
-      if (!e.features || !e.features[0]) return
+    const interactiveLayers = ['regions-coarse-fill', 'villages-fill']
 
-      const cropId = activeCropRef.current
-      const feat = e.features[0]
-      const rawScore = feat.properties?.[`score_${cropId}`]
-      if (rawScore === null || rawScore === undefined || rawScore === '') {
+    interactiveLayers.forEach((layerId) => {
+      map.on('mousemove', layerId, (e) => {
+        if (!e.features || !e.features[0]) return
+
+        const cropId = activeCropRef.current
+        const feat = e.features[0]
+        const rawScore = feat.properties?.[`score_${cropId}`]
+        if (rawScore === null || rawScore === undefined || rawScore === '') {
+          map.getCanvas().style.cursor = ''
+          popupRef.current?.remove()
+          return
+        }
+
+        map.getCanvas().style.cursor = 'pointer'
+
+        const name = String(feat.properties?.name || 'Region')
+        const kab = String(feat.properties?.kabupaten || '')
+        const prov = String(feat.properties?.province || '')
+        const scoreNum = Number(rawScore)
+        const currentScore = scoreNum.toFixed(1)
+        const tier = getSuitabilityTier(scoreNum)
+        const cropMeta = CROPS[cropId]
+
+        const container = document.createElement('div')
+        container.className = 'p-2.5 font-sans text-xs min-w-[180px]'
+
+        const headerEl = document.createElement('div')
+        headerEl.className = 'flex items-center justify-between gap-1 mb-1'
+
+        const cropBadge = document.createElement('span')
+        cropBadge.className = 'text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded'
+        cropBadge.textContent = cropMeta.name.split(' ')[0]
+        headerEl.appendChild(cropBadge)
+
+        const resBadge = document.createElement('span')
+        resBadge.className = 'text-[9px] text-gray-400 uppercase tracking-wider font-semibold'
+        resBadge.textContent = feat.properties?.resolution === 'village' ? 'Desa' : 'Kabupaten'
+        headerEl.appendChild(resBadge)
+
+        container.appendChild(headerEl)
+
+        const titleEl = document.createElement('div')
+        titleEl.className = 'font-bold text-gray-900 text-sm leading-tight'
+        titleEl.textContent = name
+        container.appendChild(titleEl)
+
+        if (kab || prov) {
+          const subEl = document.createElement('div')
+          subEl.className = 'text-[11px] text-gray-500 mb-2'
+          subEl.textContent = [kab, prov].filter(Boolean).join(', ')
+          container.appendChild(subEl)
+        }
+
+        const scoreRow = document.createElement('div')
+        scoreRow.className = 'flex items-center justify-between gap-2 pt-1.5 border-t border-gray-100'
+
+        const scoreValue = document.createElement('span')
+        scoreValue.className = 'font-black font-mono text-gray-900 text-base'
+        scoreValue.textContent = `${currentScore}%`
+
+        const badge = document.createElement('span')
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full text-white shadow-xs'
+        badge.style.backgroundColor = tier.color
+        badge.textContent = tier.title
+
+        scoreRow.appendChild(scoreValue)
+        scoreRow.appendChild(badge)
+        container.appendChild(scoreRow)
+
+        popupRef.current?.setLngLat(e.lngLat).setDOMContent(container).addTo(map)
+      })
+
+      map.on('mouseleave', layerId, () => {
         map.getCanvas().style.cursor = ''
         popupRef.current?.remove()
-        return
-      }
+      })
 
-      map.getCanvas().style.cursor = 'pointer'
+      map.on('click', layerId, async (e) => {
+        if (!e.features || !e.features[0]) return
+        const feat = e.features[0]
+        const cropId = activeCropRef.current
+        const rawScore = feat.properties?.[`score_${cropId}`]
+        if (rawScore === null || rawScore === undefined || rawScore === '') return
 
-      const name = String(feat.properties?.name || 'Region')
-      const kab = String(feat.properties?.kabupaten || '')
-      const prov = String(feat.properties?.province || '')
-      const scoreNum = Number(rawScore)
-      const currentScore = scoreNum.toFixed(1)
-      const tier = getSuitabilityTier(scoreNum)
-      const cropMeta = CROPS[cropId]
-
-      const container = document.createElement('div')
-      container.className = 'p-2.5 font-sans text-xs min-w-[180px]'
-
-      const headerEl = document.createElement('div')
-      headerEl.className = 'flex items-center justify-between gap-1 mb-1'
-
-      const cropBadge = document.createElement('span')
-      cropBadge.className = 'text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded'
-      cropBadge.textContent = cropMeta.name.split(' ')[0]
-      headerEl.appendChild(cropBadge)
-
-      const resBadge = document.createElement('span')
-      resBadge.className = 'text-[9px] text-gray-400 uppercase tracking-wider font-semibold'
-      resBadge.textContent = feat.properties?.resolution === 'village' ? 'Desa' : 'Kabupaten'
-      headerEl.appendChild(resBadge)
-
-      container.appendChild(headerEl)
-
-      const titleEl = document.createElement('div')
-      titleEl.className = 'font-bold text-gray-900 text-sm leading-tight'
-      titleEl.textContent = name
-      container.appendChild(titleEl)
-
-      if (kab || prov) {
-        const subEl = document.createElement('div')
-        subEl.className = 'text-[11px] text-gray-500 mb-2'
-        subEl.textContent = [kab, prov].filter(Boolean).join(', ')
-        container.appendChild(subEl)
-      }
-
-      const scoreRow = document.createElement('div')
-      scoreRow.className = 'flex items-center justify-between gap-2 pt-1.5 border-t border-gray-100'
-
-      const scoreValue = document.createElement('span')
-      scoreValue.className = 'font-black font-mono text-gray-900 text-base'
-      scoreValue.textContent = `${currentScore}%`
-
-      const badge = document.createElement('span')
-      badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full text-white shadow-xs'
-      badge.style.backgroundColor = tier.color
-      badge.textContent = tier.title
-
-      scoreRow.appendChild(scoreValue)
-      scoreRow.appendChild(badge)
-      container.appendChild(scoreRow)
-
-      popupRef.current?.setLngLat(e.lngLat).setDOMContent(container).addTo(map)
-    })
-
-    map.on('mouseleave', 'villages-fill', () => {
-      map.getCanvas().style.cursor = ''
-      popupRef.current?.remove()
-    })
-
-    // Click handler to select village and fetch details
-    map.on('click', 'villages-fill', async (e) => {
-      if (!e.features || !e.features[0]) return
-      const feat = e.features[0]
-      const rawScore = feat.properties?.[`score_${activeCrop}`]
-      if (rawScore === null || rawScore === undefined || rawScore === '') return
-
-      const villageId = feat.properties?.id
-      if (villageId) {
-        try {
-          const res = await fetch(`${apiBase}/villages/${villageId}`)
-          if (res.ok) {
-            const data: VillageDetail = await res.json()
-            onSelectVillage(data)
+        const villageId = feat.properties?.id
+        if (villageId) {
+          try {
+            const res = await fetch(`${apiBase}/villages/${villageId}`)
+            if (res.ok) {
+              const data: VillageDetail = await res.json()
+              onSelectVillage(data)
+            }
+          } catch (err) {
+            console.error('Failed to load village details:', err)
           }
-        } catch (err) {
-          console.error('Failed to load village details:', err)
         }
-      }
+      })
     })
 
     mapRef.current = map
@@ -313,9 +341,9 @@ export function MapComponent({
   // Update fill color and min score filter when activeCrop or minScore changes
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !map.isStyleLoaded() || !map.getLayer('villages-fill')) return
+    if (!map || !map.isStyleLoaded()) return
 
-    map.setPaintProperty('villages-fill', 'fill-color', [
+    const fillColorExpr: maplibregl.ExpressionSpecification = [
       'interpolate',
       ['linear'],
       ['to-number', ['get', `score_${activeCrop}`], 0],
@@ -331,27 +359,26 @@ export function MapComponent({
       '#16a34a',
       100,
       '#065f46',
-    ])
+    ]
 
-    map.setPaintProperty('villages-fill', 'fill-opacity', [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      3,
-      0.85,
-      6,
-      0.85,
-      8,
-      0.80,
-      12,
-      0.75,
-    ])
+    if (map.getLayer('regions-coarse-fill')) {
+      map.setPaintProperty('regions-coarse-fill', 'fill-color', fillColorExpr)
+      map.setFilter('regions-coarse-fill', [
+        'all',
+        ['==', ['get', 'resolution'], 'coarse'],
+        ['has', `score_${activeCrop}`],
+        ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
+      ])
+    }
 
-    map.setFilter('villages-fill', [
-      'all',
-      ['has', `score_${activeCrop}`],
-      ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
-    ])
+    if (map.getLayer('villages-fill')) {
+      map.setPaintProperty('villages-fill', 'fill-color', fillColorExpr)
+      map.setFilter('villages-fill', [
+        'all',
+        ['has', `score_${activeCrop}`],
+        ['>=', ['to-number', ['get', `score_${activeCrop}`], -1], minScore],
+      ])
+    }
 
     if (map.getLayer('villages-line')) {
       map.setFilter('villages-line', [
