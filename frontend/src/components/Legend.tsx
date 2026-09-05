@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { SlidersHorizontal, Info, ChevronUp, Sparkles, X } from 'lucide-react'
-import { CropId, CROPS } from '../types'
+import { CropId, CROPS, SUITABILITY_TIERS } from '../types'
 
 interface LegendProps {
   activeCrop: CropId
@@ -15,14 +15,6 @@ export const Legend: React.FC<LegendProps> = ({
 }) => {
   const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false)
   const crop = CROPS[activeCrop]
-
-  const tiers = [
-    { label: '85 - 100%', title: 'Highly Suitable', color: '#16a34a' },
-    { label: '70 - 85%', title: 'Suitable', color: '#84cc16' },
-    { label: '50 - 70%', title: 'Moderately Suitable', color: '#eab308' },
-    { label: '30 - 50%', title: 'Marginally Suitable', color: '#f97316' },
-    { label: '< 30%', title: 'Unsuitable / Restricted', color: '#ef4444' },
-  ]
 
   const renderLegendBody = () => (
     <>
@@ -53,18 +45,23 @@ export const Legend: React.FC<LegendProps> = ({
         </div>
 
         {/* Gradient Preview Bar */}
-        <div className="h-2.5 w-full rounded-full bg-gradient-to-r from-red-500 via-yellow-500 via-lime-500 to-green-800 shadow-inner" />
+        <div
+          className="h-2.5 w-full rounded-full shadow-inner"
+          style={{
+            background: 'linear-gradient(to right, #ef4444 0%, #f97316 30%, #eab308 50%, #84cc16 70%, #16a34a 85%, #065f46 100%)',
+          }}
+        />
 
         {/* Color Tiers */}
         <div className="grid grid-cols-1 gap-1 pt-1">
-          {tiers.map((tier) => (
+          {SUITABILITY_TIERS.map((tier) => (
             <div key={tier.label} className="flex items-center justify-between text-[11px]">
               <div className="flex items-center gap-2">
                 <span
                   className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10 shrink-0"
                   style={{ backgroundColor: tier.color }}
                 />
-                <span className="text-gray-600">{tier.title}</span>
+                <span className="text-gray-600 font-medium">{tier.title}</span>
               </div>
               <span className="font-mono text-gray-400 text-[10px]">{tier.label}</span>
             </div>

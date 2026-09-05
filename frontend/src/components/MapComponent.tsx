@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { CropId, PROVINCE_VIEWS, VillageDetail } from '../types'
+import { CropId, getSuitabilityTier, PROVINCE_VIEWS, VillageDetail } from '../types'
 
 interface MapComponentProps {
   activeCrop: CropId
@@ -216,27 +216,40 @@ export function MapComponent({
       const name = String(feat.properties?.name || 'Region')
       const kab = String(feat.properties?.kabupaten || '')
       const prov = String(feat.properties?.province || '')
-      const currentScore = Number(rawScore).toFixed(1)
+      const scoreNum = Number(rawScore)
+      const currentScore = scoreNum.toFixed(1)
+      const tier = getSuitabilityTier(scoreNum)
 
       const container = document.createElement('div')
-      container.className = 'p-1.5 font-sans text-xs'
+      container.className = 'p-2 font-sans text-xs min-w-[160px]'
 
       const titleEl = document.createElement('div')
-      titleEl.className = 'font-bold text-gray-900'
+      titleEl.className = 'font-bold text-gray-900 text-sm'
       titleEl.textContent = name
       container.appendChild(titleEl)
 
       if (kab || prov) {
         const subEl = document.createElement('div')
-        subEl.className = 'text-[11px] text-gray-500'
+        subEl.className = 'text-[11px] text-gray-500 mb-1.5'
         subEl.textContent = [kab, prov].filter(Boolean).join(', ')
         container.appendChild(subEl)
       }
 
-      const scoreEl = document.createElement('div')
-      scoreEl.className = 'mt-1.5 font-semibold text-emerald-700'
-      scoreEl.textContent = `Suitability Score: ${currentScore}%`
-      container.appendChild(scoreEl)
+      const scoreRow = document.createElement('div')
+      scoreRow.className = 'flex items-center justify-between gap-2 pt-1.5 border-t border-gray-100'
+
+      const scoreValue = document.createElement('span')
+      scoreValue.className = 'font-bold font-mono text-gray-900 text-sm'
+      scoreValue.textContent = `${currentScore}%`
+
+      const badge = document.createElement('span')
+      badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full text-white'
+      badge.style.backgroundColor = tier.color
+      badge.textContent = tier.title
+
+      scoreRow.appendChild(scoreValue)
+      scoreRow.appendChild(badge)
+      container.appendChild(scoreRow)
 
       popupRef.current?.setLngLat(e.lngLat).setDOMContent(container).addTo(map)
     })

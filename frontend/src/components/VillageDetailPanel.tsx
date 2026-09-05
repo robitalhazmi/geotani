@@ -1,6 +1,6 @@
 import React from 'react'
 import { X, MapPin, CloudSun, Mountain, Layers, Navigation, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { CropId, CROPS, VillageDetail } from '../types'
+import { CropId, CROPS, getSuitabilityTier, VillageDetail } from '../types'
 
 interface VillageDetailPanelProps {
   village: VillageDetail
@@ -22,15 +22,7 @@ export const VillageDetailPanel: React.FC<VillageDetailPanelProps> = ({
   const terrainScore = currentScoreObj?.terrain_score ?? 0
   const accessScore = currentScoreObj?.access_score ?? 0
 
-  const getScoreColor = (val: number) => {
-    if (val >= 85) return { bg: 'bg-emerald-700', text: 'text-emerald-700', border: 'border-emerald-200', lightBg: 'bg-emerald-50', label: 'Highly Suitable' }
-    if (val >= 70) return { bg: 'bg-emerald-500', text: 'text-emerald-600', border: 'border-emerald-200', lightBg: 'bg-emerald-50', label: 'Suitable' }
-    if (val >= 50) return { bg: 'bg-amber-500', text: 'text-amber-600', border: 'border-amber-200', lightBg: 'bg-amber-50', label: 'Moderately Suitable' }
-    if (val >= 30) return { bg: 'bg-orange-500', text: 'text-orange-600', border: 'border-orange-200', lightBg: 'bg-orange-50', label: 'Marginally Suitable' }
-    return { bg: 'bg-red-500', text: 'text-red-600', border: 'border-red-200', lightBg: 'bg-red-50', label: 'Unsuitable / Restricted' }
-  }
-
-  const scoreMeta = getScoreColor(score)
+  const scoreMeta = getSuitabilityTier(score)
 
   // Explainability diagnosis
   const isClimateLimited = climateScore < 50 && (soilScore > 60 || terrainScore > 60)
@@ -81,6 +73,7 @@ export const VillageDetailPanel: React.FC<VillageDetailPanelProps> = ({
         {(Object.keys(CROPS) as CropId[]).map((cropId) => {
           const s = village.scores.find((item) => item.crop === cropId)?.score ?? 0
           const isSelected = activeCrop === cropId
+          const t = getSuitabilityTier(s)
           return (
             <button
               key={cropId}
@@ -92,7 +85,7 @@ export const VillageDetailPanel: React.FC<VillageDetailPanelProps> = ({
               }`}
             >
               <span className="text-[11px] capitalize">{cropId}</span>
-              <span className={`text-[11px] font-mono font-bold ${getScoreColor(s).text}`}>
+              <span className={`text-[11px] font-mono font-bold ${t.textColor}`}>
                 {s.toFixed(1)}%
               </span>
             </button>
@@ -101,7 +94,7 @@ export const VillageDetailPanel: React.FC<VillageDetailPanelProps> = ({
       </div>
 
       {/* Hero Overall Score Card */}
-      <div className={`mt-4 rounded-xl border p-4 ${scoreMeta.lightBg} ${scoreMeta.border}`}>
+      <div className={`mt-4 rounded-xl border p-4 ${scoreMeta.lightBg} ${scoreMeta.borderColor}`}>
         <div className="flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -111,14 +104,14 @@ export const VillageDetailPanel: React.FC<VillageDetailPanelProps> = ({
               {score.toFixed(1)}%
             </div>
           </div>
-          <span className={`text-xs font-bold px-3 py-1 rounded-full border bg-white ${scoreMeta.text} ${scoreMeta.border} shadow-xs`}>
-            {scoreMeta.label}
+          <span className={`text-xs font-bold px-3 py-1 rounded-full border bg-white ${scoreMeta.textColor} ${scoreMeta.borderColor} shadow-xs`}>
+            {scoreMeta.title}
           </span>
         </div>
 
         <div className="mt-3 w-full bg-gray-200/80 rounded-full h-2 overflow-hidden">
           <div
-            className={`h-2 rounded-full ${scoreMeta.bg} transition-all duration-500`}
+            className={`h-2 rounded-full ${scoreMeta.bgColor} transition-all duration-500`}
             style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
           />
         </div>

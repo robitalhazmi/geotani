@@ -81,8 +81,86 @@ export const CROPS: Record<CropId, CropMeta> = {
 }
 
 export const PROVINCE_VIEWS: Record<string, { center: [number, number]; zoom: number }> = {
-  all: { center: [118.0, -3.0], zoom: 5 },
-  east_java: { center: [112.5, -7.7], zoom: 8 },
-  lampung: { center: [105.2, -5.0], zoom: 8 },
-  south_sulawesi: { center: [120.0, -4.0], zoom: 7.5 },
+  all: { center: [118.0, -2.5], zoom: 4.8 },
+  east_java: { center: [112.5, -7.7], zoom: 8.2 },
+  lampung: { center: [105.2, -5.0], zoom: 8.5 },
+  south_sulawesi: { center: [120.0, -3.8], zoom: 7.8 },
+}
+
+export interface SuitabilityTier {
+  min: number
+  max: number
+  label: string
+  title: string
+  color: string
+  textColor: string
+  bgColor: string
+  lightBg: string
+  borderColor: string
+}
+
+export const SUITABILITY_TIERS: SuitabilityTier[] = [
+  {
+    min: 85,
+    max: 100,
+    label: '85 - 100%',
+    title: 'Highly Suitable',
+    color: '#16a34a',
+    textColor: 'text-emerald-700',
+    bgColor: 'bg-emerald-600',
+    lightBg: 'bg-emerald-50',
+    borderColor: 'border-emerald-300',
+  },
+  {
+    min: 70,
+    max: 85,
+    label: '70 - 85%',
+    title: 'Suitable',
+    color: '#84cc16',
+    textColor: 'text-lime-700',
+    bgColor: 'bg-lime-500',
+    lightBg: 'bg-lime-50',
+    borderColor: 'border-lime-300',
+  },
+  {
+    min: 50,
+    max: 70,
+    label: '50 - 70%',
+    title: 'Moderately Suitable',
+    color: '#eab308',
+    textColor: 'text-amber-700',
+    bgColor: 'bg-amber-500',
+    lightBg: 'bg-amber-50',
+    borderColor: 'border-amber-300',
+  },
+  {
+    min: 30,
+    max: 50,
+    label: '30 - 50%',
+    title: 'Marginally Suitable',
+    color: '#f97316',
+    textColor: 'text-orange-700',
+    bgColor: 'bg-orange-500',
+    lightBg: 'bg-orange-50',
+    borderColor: 'border-orange-300',
+  },
+  {
+    min: 0,
+    max: 30,
+    label: '< 30%',
+    title: 'Unsuitable / Restricted',
+    color: '#ef4444',
+    textColor: 'text-red-700',
+    bgColor: 'bg-red-500',
+    lightBg: 'bg-red-50',
+    borderColor: 'border-red-300',
+  },
+]
+
+export function getSuitabilityTier(score: number): SuitabilityTier {
+  if (score >= 85) return SUITABILITY_TIERS[0]
+  if (score >= 70) return SUITABILITY_TIERS[1]
+  if (score >= 50) return SUITABILITY_TIERS[2]
+  if (score >= 30) return SUITABILITY_TIERS[3]
+  return SUITABILITY_TIERS[4]
 }
