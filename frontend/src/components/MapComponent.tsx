@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { CropId, getSuitabilityTier, PROVINCE_VIEWS, VillageDetail } from '../types'
+import { CropId, CROPS, getSuitabilityTier, PROVINCE_VIEWS, VillageDetail } from '../types'
 
 interface MapComponentProps {
   activeCrop: CropId
@@ -41,6 +41,11 @@ export function MapComponent({
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const popupRef = useRef<maplibregl.Popup | null>(null)
+  const activeCropRef = useRef<CropId>(activeCrop)
+
+  useEffect(() => {
+    activeCropRef.current = activeCrop
+  }, [activeCrop])
 
   useEffect(() => {
     if (!mapContainer.current) return
@@ -203,8 +208,9 @@ export function MapComponent({
     map.on('mousemove', 'villages-fill', (e) => {
       if (!e.features || !e.features[0]) return
 
+      const cropId = activeCropRef.current
       const feat = e.features[0]
-      const rawScore = feat.properties?.[`score_${activeCrop}`]
+      const rawScore = feat.properties?.[`score_${cropId}`]
       if (rawScore === null || rawScore === undefined || rawScore === '') {
         map.getCanvas().style.cursor = ''
         popupRef.current?.remove()
@@ -219,18 +225,34 @@ export function MapComponent({
       const scoreNum = Number(rawScore)
       const currentScore = scoreNum.toFixed(1)
       const tier = getSuitabilityTier(scoreNum)
+      const cropMeta = CROPS[cropId]
 
       const container = document.createElement('div')
-      container.className = 'p-2 font-sans text-xs min-w-[160px]'
+      container.className = 'p-2.5 font-sans text-xs min-w-[180px]'
+
+      const headerEl = document.createElement('div')
+      headerEl.className = 'flex items-center justify-between gap-1 mb-1'
+
+      const cropBadge = document.createElement('span')
+      cropBadge.className = 'text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded'
+      cropBadge.textContent = cropMeta.name.split(' ')[0]
+      headerEl.appendChild(cropBadge)
+
+      const resBadge = document.createElement('span')
+      resBadge.className = 'text-[9px] text-gray-400 uppercase tracking-wider font-semibold'
+      resBadge.textContent = feat.properties?.resolution === 'village' ? 'Desa' : 'Kabupaten'
+      headerEl.appendChild(resBadge)
+
+      container.appendChild(headerEl)
 
       const titleEl = document.createElement('div')
-      titleEl.className = 'font-bold text-gray-900 text-sm'
+      titleEl.className = 'font-bold text-gray-900 text-sm leading-tight'
       titleEl.textContent = name
       container.appendChild(titleEl)
 
       if (kab || prov) {
         const subEl = document.createElement('div')
-        subEl.className = 'text-[11px] text-gray-500 mb-1.5'
+        subEl.className = 'text-[11px] text-gray-500 mb-2'
         subEl.textContent = [kab, prov].filter(Boolean).join(', ')
         container.appendChild(subEl)
       }
@@ -239,11 +261,11 @@ export function MapComponent({
       scoreRow.className = 'flex items-center justify-between gap-2 pt-1.5 border-t border-gray-100'
 
       const scoreValue = document.createElement('span')
-      scoreValue.className = 'font-bold font-mono text-gray-900 text-sm'
+      scoreValue.className = 'font-black font-mono text-gray-900 text-base'
       scoreValue.textContent = `${currentScore}%`
 
       const badge = document.createElement('span')
-      badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full text-white'
+      badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full text-white shadow-xs'
       badge.style.backgroundColor = tier.color
       badge.textContent = tier.title
 
