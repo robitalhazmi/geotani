@@ -114,9 +114,9 @@ def main():
     print("Filtering pilot villages (ADM4)...")
     pilot_villages = gdf_adm4[pilot_mask_4].copy()
 
-    # 2. Filter coarse boundaries (all 522 regencies across all 38 provinces in Indonesia)
-    print("Extracting nationwide regency boundaries (ADM2)...")
-    coarse_regions = gdf_adm2.copy()
+    # 2. Filter coarse boundaries (rest of Indonesia)
+    print("Filtering coarse nationwide boundaries (ADM2)...")
+    coarse_regions = gdf_adm2[~pilot_mask_2].copy()
 
     # Standardize ADM4
     pcode_col = get_col(pilot_villages, "adm4_pcode", "ADM4_PCODE")
