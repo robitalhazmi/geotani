@@ -102,13 +102,59 @@ In your domain DNS manager (Rumahweb DNS / Cloudflare / registrar):
 
 ## 5. Deploying GeoTani
 
-### Step 5.1: Clone the Repository
+GeoTani supports two primary production deployment tracks:
+* **Track A: Coolify PaaS (Docker Compose)** — Recommended for self-hosted cloud environments with automatic SSL and multi-app management.
+* **Track B: Native Linux VPS (Caddy + Shell Automation)** — Recommended for standalone dedicated Ubuntu/Debian instances.
+
+---
+
+### Track A: Coolify PaaS Deployment
+
+Coolify is an open-source, self-hosted PaaS that provides a web-based dashboard and automated Traefik reverse proxy.
+
+#### Step A.1: Create Resource in Coolify
+1. In the Coolify Dashboard, click **+ Add Resource** → **Docker Compose**.
+2. Select your Git source and configure:
+   * **Repository URL**: `https://github.com/robitalhazmi/geotani.git`
+   * **Branch**: `main`
+   * **Docker Compose Location**: `/docker-compose.coolify.yml`
+
+#### Step A.2: Configure Environment Variables
+Under the **Environment Variables** tab for the newly created resource, configure:
+
+| Variable | Example Value | Description |
+|---|---|---|
+| `DOMAIN_NAME` | `geotani.cloud` | Production domain name |
+| `CORS_ORIGINS` | `https://geotani.cloud,https://www.geotani.cloud` | Allowed HTTP CORS origins |
+| `POSTGRES_USER` | `geotani` | PostgreSQL username |
+| `POSTGRES_PASSWORD` | `<secure_random_password>` | PostgreSQL database password |
+| `POSTGRES_DB` | `geotani` | PostgreSQL database name |
+
+#### Step A.3: Deploy Application Stack
+Click **Deploy**. Coolify builds the React frontend with Caddy, starts FastAPI, PostGIS 16, and Martin, and connects the gateway to Traefik on the `coolify` external network with automatic Let's Encrypt certificates.
+
+#### Step A.4: Run the Resumable ETL Data Seeding Pipeline
+On your VPS terminal, execute the data pipeline inside the running API container:
+
+```bash
+# 1. Trigger the end-to-end data pipeline
+sudo docker exec -it $(sudo docker ps | grep -E "api-" | awk '{print $1}') ./scripts/run_etl_pipeline.sh
+
+# 2. Restart the Martin tile server to flush vector tile cache
+sudo docker restart $(sudo docker ps | grep -E "tiles-" | awk '{print $1}')
+```
+
+---
+
+### Track B: Native Linux VPS Deployment (Caddy + Automated Script)
+
+#### Step B.1: Clone the Repository
 ```bash
 git clone https://github.com/robitalhazmi/geotani.git /opt/geotani
 cd /opt/geotani
 ```
 
-### Step 5.2: Configure Environment Variables
+#### Step B.2: Configure Environment Variables
 ```bash
 cp .env.prod.example .env.prod
 nano .env.prod
@@ -123,18 +169,21 @@ POSTGRES_PASSWORD=YOUR_SECURE_STRONG_PASSWORD
 POSTGRES_DB=geotani
 ```
 
-### Step 5.3: Run the Automated Deployment Script
+#### Step B.3: Run the Automated Deployment Script
 ```bash
 ./scripts/deploy.sh
 ```
 
-### Step 5.4: Seeding Database on Fresh VPS
+#### Step B.4: Seeding Database on Fresh VPS
 
 Since raw and processed geospatial datasets are not tracked in Git, run the automated end-to-end data pipeline directly on your VPS:
 
 ```bash
 # Run the complete automated ETL pipeline inside the API container:
 sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api ./scripts/run_etl_pipeline.sh
+
+# Restart Martin tile server:
+sudo docker compose --env-file .env.prod -f docker-compose.prod.yml restart tiles
 ```
 
 The pipeline will automatically:
@@ -153,7 +202,10 @@ Test all endpoints once deployment is complete:
 
 ```bash
 # 1. Check container statuses
+# On Native VPS:
 docker compose -f docker-compose.prod.yml ps
+# On Coolify VPS:
+sudo docker ps
 
 # 2. Check API health endpoint
 curl -I https://geotani.cloud/health
@@ -388,7 +440,7 @@ sudo systemctl restart ssh
 
 ### 12. VPS Disk Space Optimization & Routine Maintenance
 
-To keep your VPS storage clean and reclaim **10–12+ GB** after builds and ETL data runs:
+To keep your VPS storage clean and reclaim **10–15+ GB** after builds and ETL data runs:
 
 ```bash
 # 1. Prune Docker BuildKit build cache (~5 GB)
@@ -397,14 +449,24 @@ sudo docker builder prune -a -f
 # 2. Prune old/dangling container images
 sudo docker image prune -a -f
 
-# 3. Clean raw downloaded GIS archives from the named volume (~5–6 GB)
-sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api rm -rf /app/data/raw/* /app/data/processed/elevation/*
+# 3. Prune unused Docker volumes
+sudo docker volume prune -f
 
-# 4. Vacuum systemd journal logs to 100MB max
+# 4. Clean raw downloaded GIS archives from the named volume (~5–6 GB, safe after PostGIS load)
+# For Native VPS:
+sudo docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm api rm -rf /app/data/raw/* /app/data/processed/elevation/*
+# For Coolify VPS:
+sudo docker exec -it $(sudo docker ps | grep -E "api-" | awk '{print $1}') rm -rf /app/data/raw/* /app/data/processed/elevation/*
+
+# 5. Vacuum systemd journal logs to 100MB max
 sudo journalctl --vacuum-size=100M
 
-# 5. Clean APT package cache
+# 6. Clean APT package cache
 sudo apt-get clean && sudo apt-get autoremove --purge -y
+
+# 7. Check updated disk usage
+df -h /
+sudo docker system df
 ```
 
 
