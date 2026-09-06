@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-geotani}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-geotani_prod}
+      POSTGRES_DB: ${POSTGRES_DB:-geotani}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-geotani} -d ${POSTGRES_DB:-geotani}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-geotani}:${POSTGRES_PASSWORD:-geotani_prod}@db:5432/${POSTGRES_DB:-geotani}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://geotani.cloud,https://www.geotani.cloud}
+    volumes:
+      - geotani_data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+  tiles:
+    image: ghcr.io/maplibre/martin:v0.15.0
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-geotani}:${POSTGRES_PASSWORD:-geotani_prod}@db:5432/${POSTGRES_DB:-geotani}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: always
+    expose:
+      - "80"
+    environment:
+      DOMAIN_NAME: :80
+    depends_on:
+      - api
+      - tiles
+
+volumes:
+  postgres_prod_data:
+  geotani_data:
