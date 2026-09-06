@@ -6,6 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-geotani}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-geotani_prod}
       POSTGRES_DB: ${POSTGRES_DB:-geotani}
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     healthcheck:
