@@ -50,6 +50,16 @@ services:
     networks:
       - default
       - coolify
+    labels:
+      - "coolify.managed=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.geotani-http.entrypoints=http"
+      - "traefik.http.routers.geotani-http.rule=Host(`geotani.cloud`) || Host(`www.geotani.cloud`)"
+      - "traefik.http.routers.geotani-https.entrypoints=https"
+      - "traefik.http.routers.geotani-https.rule=Host(`geotani.cloud`) || Host(`www.geotani.cloud`)"
+      - "traefik.http.routers.geotani-https.tls=true"
+      - "traefik.http.routers.geotani-https.tls.certresolver=letsencrypt"
+      - "traefik.http.services.geotani.loadbalancer.server.port=80"
     depends_on:
       - api
       - tiles
