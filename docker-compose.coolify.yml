@@ -47,6 +47,9 @@ services:
       - "80"
     environment:
       DOMAIN_NAME: :80
+    networks:
+      - default
+      - coolify
     depends_on:
       - api
       - tiles
@@ -54,3 +57,8 @@ services:
 volumes:
   postgres_prod_data:
   geotani_data:
+
+networks:
+  default:
+  coolify:
+    external: true
